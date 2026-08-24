@@ -1,0 +1,183 @@
+CONTEXTO 
+Sobre a Visão Coop 
+A Visão Coop é uma organização brasileira que desenvolve soluções de adaptação 
+climática por meio de comunicação, tecnologia e mobilização social. Nossa 
+missão é fortalecer a resiliência climática de comunidades vulneráveis, 
+conectando pessoas, saberes e ferramentas para responder às emergências 
+ambientais que atingem de forma desproporcional os territórios em 
+vulnerabilidade. 
+Parte da nossa trajetória 
+A escuta e o mapeamento de soluções territoriais são parte central da nossa 
+história. Com o documentário “Como Sobreviver”, dirigido por Fabrícia Sterce e 
+produzido pela Visão Coop, registramos as estratégias de resiliência e adaptação 
+em diferentes territórios da América Latina. O filme documenta como as próprias 
+comunidades constroem respostas à crise climática. 
+No projeto SbT (Soluções baseadas no Território), aprofundamos esse trabalho ao 
+mapear 10 soluções baseadas no território ao longo do Brasil, sistematizando 
+metodologias, contextos e resultados dessas iniciativas. Essa experiência 
+evidenciou o valor de acervos organizados de soluções que possam ser 
+consultados, comparados e replicados por quem enfrenta desafios semelhantes. 
+A Funcionalidade de mapa na Plataforma 
+O Território (territorio.ai) é uma plataforma digital que mapeia e organiza soluções 
+conduzidas por comunidades, pessoas ou organizações de resiliência climática ou 
+adaptação. 
+Dentro dela, o Mapa será a interface principal: reúne missões, mutirões, memórias 
+e dados ambientais em uma visualização geográfica única, navegável e 
+interoperável. 
+Nosso ponto de partida conceitual é: “O Território começa onde o GeoInfo 
+termina.” Plataformas como o GeoInfo, da Embrapa — construída sobre os 
+softwares livres GeoNode e GeoNetwork —, são infraestruturas institucionais de 
+dados espaciais: organizam camadas, mapas e documentos, permitem sobrepor 
+camadas temáticas e exportar dados em formatos abertos. O Território se apoia 
+nessa mesma lógica de interoperabilidade, mas volta-se à ação comunitária: em 
+vez de um repositório institucional de pesquisa, é um espaço vivo, gamificado e 
+colaborativo, pensado para pessoas e organizações que agem no território. 
+OBJETIVO 
+Entregar uma funcionalidade de mapa interativo, colaborativo e interoperável, 
+que permita visualizar, criar, importar e exportar dados geoespaciais, integrar as 
+ações realizadas na plataforma (missões, alertas, mutirões, memórias) e dados 
+externos (incluindo o acervo de soluções obtido por raspagem de dados). Tudo 
+com uma experiência gamificada e de uso simples, que não gere confusão no 
+usuário. 
+O mapa como repositório colaborativo 
+A referência estrutural do Mapa é o funcionamento de um repositório do GitHub. 
+Cada mapa é um projeto que pertence a alguém e pode receber contribuições de 
+outras pessoas mediante permissão. - Propriedade: cada mapa está vinculado a uma pessoa ou a uma 
+organização, que é sua responsável. - Colaboração: o dono do mapa define quem pode colaborar. A colaboração 
+é bidirecional: você pode colaborar em mapas de outras pessoas, e outras pessoas 
+podem colaborar no seu. - Permissões: o criador controla a visibilidade (público ou privado) e o nível 
+de acesso de cada colaborador (visualizar, sugerir, editar). - Estrelas: usuários podem dar estrela a um mapa para fortalecê-lo e 
+sinalizar sua relevância para a comunidade. - Insígnias: a quantidade de estrelas recebidas gera insígnias na plataforma, 
+reconhecendo os mapas e seus mantenedores. 
+Esse modelo distribui a construção do conhecimento territorial: em vez de uma 
+base central única, temos muitos mapas conectados, mantidos por pessoas e 
+organizações, que se reforçam mutuamente. 
+Funcionalidades do Mapa 
+As funções abaixo compõem o escopo da funcionalidade. Estão organizadas em 
+dois grupos: a base do mapa (interface e navegação) e as missões (criação e 
+interação sobre o mapa). 
+Base do mapa: interface e navegação - Mapa interativo: exibe os mutirões na plataforma, permite a visualização 
+de relatórios e a visualização de dados qualitativos e quantitativos. 
+Atualizações de mutirões surgem como notificação naquele mutirão que será 
+visualizado ao abri-lo. - Perfil: botão que abre o perfil do usuário diretamente a partir do mapa e 
+permissão para filtrar mapas públicos de outros usuários, onde ele gerencia seus 
+mapas, conquistas e informações. - Memória: botão que leva à trilha de memórias(acervo), onde o usuário 
+acessa e acompanha registros. (Atualmente é a aba de Galeria de um Manual que 
+armazena registros, é válido pensar em um escopo relacionando ferramentas da 
+plataforma) - Zoom In / Zoom Out: botões para ampliar ou reduzir a visualização, 
+ajustando o campo de visão e diminuindo a região precisa renderizar apenas 
+àquela região sendo mostrada no mapa pra que seja um mapa otimizado e não 
+precise fazer buscas muito grandes na base de dados pra otimização dos dados 
+no front. - Barra HUD de Alertas: barra que notifica o usuário sobre atualizações 
+importantes: emergências, novas missões e atualizações dos grupos aos quais 
+pertence/segue. - Contadores de indicadores: indicadores numéricos que exibem dados 
+quantitativos do progresso das missões e das informações inseridas na 
+plataforma e no mapa. Quantos colaboradores, quais prioridades de marcação 
+que vão ficar disponíveis na tela pro usuário, isso é relevante pra primeira 
+impressão ao abrir o mapa. Precisa ter dados que mostrem sua relevância. 
+Interoperabilidade de dados 
+O Mapa deve receber, integrar e disponibilizar dados de origens diversas, 
+seguindo a lógica de interoperabilidade do GeoInfo, mas adaptada ao contexto 
+comunitário. - - - - - 
+Ingestão de dados externos: receber e inserir dados variados, incluindo os 
+resultados da raspagem de dados (o acervo de soluções climáticas 
+mapeadas). 
+Importação de mapas: importar outros mapas para dentro da plataforma, 
+para visualização, como já acontece hoje no GeoInfo, permitindo preencher 
+lacunas de cobertura. 
+Exportação de dados: exportar dados do mapa em formatos abertos para 
+uso em outros contextos e ferramentas. 
+Visualização das ações da plataforma: as ações realizadas no Território, 
+como os mutirões concluídos, missões e memórias, ficam disponíveis para 
+visualização no próprio mapa. 
+API futura: liberar, no futuro, permissão de API para puxar mapeamentos de 
+emergências realizados por outras plataformas parceiras e exibi-los no 
+Território, integrando dados em tempo real. 
+Ferramentas de marcação e criação 
+O usuário deve poder criar diferentes tipos de elementos sobre o mapa, de modo 
+que ele também funcione no formato GeoNode/GeoInfo, em que pessoas e 
+organizações constroem suas próprias pesquisas e representações espaciais: - 
+Marcadores e pontos de interesse. - - - 
+Linhas e rotas. 
+Polígonos e formatos geográficos (áreas). 
+Camadas sobrepostas, anotações e estilos. 
+Os tipos de marcação suportados e suas limitações técnicas devem ser definidos 
+com o time de desenvolvimento. 
+Design gamificado e experiência de uso 
+O diferencial do Mapa em relação a plataformas como GeoInfo e GeoNode é a 
+linguagem gamificada, missões, recompensas, insígnias, HUD de alertas, que 
+tornam o uso mais acessível e engajante. - 
+Clareza acima de tudo 
+Apesar da riqueza de funções, a interface deve evitar sobrecarga e confusão. 
+Hierarquia visual clara, ícones de apoio e ações reconhecíveis como botões. - 
+Interações leves 
+Atualizações e missões em janelas suspensas com gestos simples (swipe para 
+aceitar ou recusar), reduzindo o ruído visual. - 
+Identidade Território 
+Paleta e identidade alinhadas à plataforma (azul marinho sobre fundo claro), 
+reforçando a percepção de um ambiente amigável. 
+Considerações técnicas (a discutir) 
+As limitações técnicas devem ser mapeadas e discutidas com o time antes e 
+durante o desenvolvimento. Abaixo, a stack candidata e os pontos em aberto. - - - - 
+Stacks de exemplo: 
+PostGIS para dados geoespaciais; Mapbox GL JS para renderização; APIs 
+abertas (ex.: MapBiomas, SRTM, CHIRPS) para camadas ambientais; 
+pipeline em Python para ingestão de dados. 
+Formatos de interoperabilidade: 
+Definir os formatos de importação/exportação suportados (ex.: GeoJSON, 
+KML, Shapefile) e a aderência a padrões abertos (OGC), a exemplo do 
+GeoInfo. 
+Modelo de permissões e versionamento: 
+Detalhar a lógica de repositório (propriedade, colaboração, histórico de 
+contribuições) e como as estrelas/insígnias serão calculadas. 
+Performance: 
+Avaliar o comportamento do mapa com muitas camadas e marcações 
+simultâneas. 
+- 
+Escopo da API futura: 
+Definir o alcance e os limites da integração com plataformas externas de 
+mapeamento de emergências. 
+Cronograma e entregas 
+O cronograma se organiza em torno de duas âncoras: as telas pré-prontas até 10 
+de agosto e as sprints de desenvolvimento até a última semana de setembro. As 
+datas das sprints são indicativas e serão confirmadas no planejamento com o 
+time. 
+Etapa 
+Período (2026) 
+Foco 
+Pré-produção 
+(design) 
+Sprint 1 
+Sprint 2 
+Até 14/08 
+17–28/08 
+31/08–11/09 
+Telas pré-prontas e protótipo navegável de todas as telas do 
+Mapa. 
+Fundação do mapa: renderização, camadas base, navegação 
+(zoom, HUD de alertas, contadores) e botões de Perfil e 
+Memória; modelo de dados geoespacial. 
+Mapa como repositório colaborativo: criação e propriedade de 
+mapas (pessoa/organização), permissões de colaboração, 
+estrelas e insígnias; ferramentas de marcação (ponto, linha, 
+polígono). 
+Sprint 3 (A 
+Discutir) 
+Sprint 4 (A 
+Discutir) 
+Observações finais: 
+14–25/09 
+28–09/10 
+Missões e interações no mapa: adicionar missão, pop-up, 
+validar, recompensa, mantimentos, montar grupo e agir; 
+visualização de mutirões e ações da plataforma. 
+Interoperabilidade: importação/exportação de mapas e dados, 
+ingestão dos dados de raspagem e preparação para a API futura; 
+polimento de UI/UX e testes. 
+Recomenda-se, como primeiro passo, validar junto ao time quais funcionalidades 
+são mais viáveis de implementar de imediato, priorizando aquelas que entregam 
+um mapa interativo utilizável no menor tempo possível. As funcionalidades 
+restantes serão liberadas aos poucos, em ondas. A premissa é entregar uma 
+primeira versão exequível e factível dentro do prazo, assegurando que o 
+cronograma seja cumprido e que cada nova funcionalidade seja construída sobre 
+uma base já estável.

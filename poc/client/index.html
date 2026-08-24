@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Território — Mapa Colaborativo de Soluções Climáticas</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <!-- Estilos Principais -->
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="app-container">
+      <!-- =========================================================================
+         1. SIDEBAR LATERAL ESQUERDA
+         ========================================================================= -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top">
+          <!-- Logo Header -->
+          <div class="sidebar-header">
+            <a href="#" class="brand-logo">
+              <div class="logo-icon">T</div>
+              <img src="./logo.png" class="brand-logo-img" alt="Território" />
+            </a>
+            <button
+              class="btn-sidebar-toggle"
+              id="btn-sidebar-toggle"
+              title="Recolher menu"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Menu de Navegação principais -->
+          <ul class="nav-menu">
+            <li class="nav-item">
+              <a href="#">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                  <path
+                    d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                  ></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>Home</span>
+              </a>
+            </li>
+            <li class="nav-item active">
+              <a href="#">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                  <polygon
+                    points="1 6 1 22 8 18 15 22 22 18 22 2 15 6 8 2 1 6"
+                  ></polygon>
+                  <line x1="8" y1="2" x2="8" y2="18"></line>
+                  <line x1="15" y1="6" x2="15" y2="22"></line>
+                </svg>
+                <span>Mapa</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path
+                    d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+                  ></path>
+                </svg>
+                <span>Manual</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>Mutirões</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>Comunidades</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#">
+                <svg class="nav-icon" viewBox="0 0 24 24">
+                  <path
+                    d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                  ></path>
+                  <path
+                    d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                  ></path>
+                </svg>
+                <span>Blog</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Footer da Sidebar: Card de XP & Perfil -->
+        <div class="sidebar-footer">
+          <div class="level-card">
+            <div class="level-info">
+              <span class="level-title">Nível 3 · Guardiã</span>
+              <span class="level-xp">720/1000</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill"></div>
+            </div>
+          </div>
+
+          <div class="user-profile">
+            <div class="avatar">AW</div>
+            <div class="user-details">
+              <span class="user-name">Amanda W.</span>
+              <span class="user-location">Bacia do Rio Doce</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- =========================================================================
+         2. ÁREA PRINCIPAL (BARRA SUPERIOR + MAPA INTERATIVO)
+         ========================================================================= -->
+      <main class="main-content">
+        <!-- Barra de Busca Superior -->
+        <header class="top-bar">
+          <button
+            class="btn-icon"
+            id="btn-topbar-sidebar-toggle"
+            title="Alternar sidebar"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+            </svg>
+          </button>
+
+          <div class="search-container">
+            <svg
+              class="search-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Buscar lugares, iniciativas ou pessoas..."
+            />
+          </div>
+
+          <button class="btn-icon notification-btn" title="Notificações">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="notification-badge"></span>
+          </button>
+        </header>
+
+        <!-- Container do Mapa -->
+        <div class="map-container">
+          <!-- Toolbar Flutuante Superior (Estilo Felt) -->
+          <div class="floating-toolbar">
+            <button
+              class="tool-btn active"
+              id="tool-select"
+              title="Ferramenta de seleção"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polygon
+                  points="3 3 3 16 9 12 13 21 16 19 12 10 19 9 3 3"
+                ></polygon>
+              </svg>
+              <span>Selecionar</span>
+            </button>
+
+            <button class="tool-btn btn-primary-action" id="btn-nova-missao">
+              <span>+ Novo Marcador</span>
+            </button>
+
+            <div class="tool-divider"></div>
+
+            <button class="tool-btn" id="tool-desenhar">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                <path d="M2 2l7.586 7.586"></path>
+                <circle cx="11" cy="11" r="2"></circle>
+              </svg>
+              <span>Desenhar</span>
+            </button>
+
+            <button class="tool-btn" data-panel="layers-panel">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+              <span>Camadas</span>
+            </button>
+
+            <button class="tool-btn" data-panel="legend-panel">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
+                ></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
+              <span>Legenda</span>
+            </button>
+
+            <button class="tool-btn" data-panel="filters-panel">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polygon
+                  points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+                ></polygon>
+              </svg>
+              <span>Filtros</span>
+            </button>
+
+            <button class="tool-btn" title="Mais opções">
+              <span>⋯</span>
+            </button>
+          </div>
+
+          <!-- Sub-Toolbar de Desenho (Aparece ao clicar em Desenhar) -->
+          <div class="drawing-subbar hidden" id="drawing-subbar">
+            <span>Modo Desenho:</span>
+            <button
+              class="draw-btn"
+              onclick="showToast('Modo de desenho de linha ativado')"
+            >
+              ✏️ Linha
+            </button>
+            <button
+              class="draw-btn"
+              onclick="showToast('Modo de polígono ativado')"
+            >
+              ⬡ Polígono
+            </button>
+            <button
+              class="draw-btn"
+              onclick="showToast('Modo de ponto de interesse ativado')"
+            >
+              📍 Ponto
+            </button>
+            <button class="btn-close-draw" id="btn-close-draw">✖ Sair</button>
+          </div>
+
+          <!-- Painel Flutuante de Camadas (Layers Drawer) -->
+          <div class="floating-panel hidden" id="layers-panel">
+            <div class="panel-header-row">
+              <span class="panel-title">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                Camadas do Mapa
+              </span>
+              <button class="btn-close-panel">✖</button>
+            </div>
+
+            <ul class="layer-list">
+              <li class="layer-item">
+                <div class="layer-item-left">
+                  <input
+                    type="checkbox"
+                    class="checkbox-custom layer-checkbox"
+                    data-layer="missoes"
+                    checked
+                  />
+                  <span class="layer-badge-icon" style="background: #10b981"
+                    >🌱</span
+                  >
+                  <span>Missões</span>
+                </div>
+              </li>
+              <li class="layer-item">
+                <div class="layer-item-left">
+                  <input
+                    type="checkbox"
+                    class="checkbox-custom layer-checkbox"
+                    data-layer="mutiroes"
+                    checked
+                  />
+                  <span class="layer-badge-icon" style="background: #f59e0b"
+                    >🤝</span
+                  >
+                  <span>Mutirões</span>
+                </div>
+              </li>
+              <li class="layer-item">
+                <div class="layer-item-left">
+                  <input
+                    type="checkbox"
+                    class="checkbox-custom layer-checkbox"
+                    data-layer="memorias"
+                    checked
+                  />
+                  <span class="layer-badge-icon" style="background: #8b5cf6"
+                    >📷</span
+                  >
+                  <span>Memórias</span>
+                </div>
+              </li>
+              <li class="layer-item">
+                <div class="layer-item-left">
+                  <input
+                    type="checkbox"
+                    class="checkbox-custom layer-checkbox"
+                    data-layer="marcadores"
+                    checked
+                  />
+                  <span class="layer-badge-icon" style="background: #ef4444"
+                    >📍</span
+                  >
+                  <span>Marcadores</span>
+                </div>
+              </li>
+              <li class="layer-item">
+                <div class="layer-item-left">
+                  <input
+                    type="checkbox"
+                    class="checkbox-custom layer-checkbox"
+                    data-layer="areas"
+                    checked
+                  />
+                  <span class="layer-badge-icon" style="background: #06b6d4"
+                    >🟢</span
+                  >
+                  <span>Áreas de intervenção</span>
+                </div>
+              </li>
+              <li class="layer-item" style="opacity: 0.6">
+                <div class="layer-item-left">
+                  <input type="checkbox" class="checkbox-custom" disabled />
+                  <span class="layer-badge-icon" style="background: #94a3b8"
+                    >🏠</span
+                  >
+                  <span>Infraestrutura comunitária</span>
+                </div>
+              </li>
+            </ul>
+
+            <div
+              style="
+                border-top: 1px solid var(--border-color);
+                padding-top: 10px;
+                margin-top: 4px;
+              "
+            >
+              <span
+                style="
+                  font-size: 0.78rem;
+                  font-weight: 700;
+                  color: var(--text-muted);
+                  text-transform: uppercase;
+                "
+                >Mapa Base</span
+              >
+              <div class="map-base-selector">
+                <div class="base-option active" data-base="satellite">
+                  Satélite
+                </div>
+                <div class="base-option" data-base="street">Vetorial</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Painel Flutuante de Filtros -->
+          <div class="floating-panel hidden" id="filters-panel">
+            <div class="panel-header-row">
+              <span class="panel-title">🎛️ Filtros de Exibição</span>
+              <button class="btn-close-panel">✖</button>
+            </div>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                font-size: 0.88rem;
+              "
+            >
+              <label><strong>Status da Missão:</strong></label>
+              <label><input type="checkbox" checked /> 🟢 Em andamento</label>
+              <label><input type="checkbox" checked /> 🟡 Planejadas</label>
+              <label><input type="checkbox" checked /> ✅ Concluídas</label>
+
+              <label style="margin-top: 8px"><strong>Categoria:</strong></label>
+              <select
+                class="form-select"
+                style="font-size: 0.8rem; padding: 6px"
+              >
+                <option>Todas as categorias</option>
+                <option>Meio Ambiente</option>
+                <option>Recursos Hídricos</option>
+                <option>Riscos e Alagamentos</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Painel Flutuante de Legenda -->
+          <div class="floating-panel hidden" id="legend-panel">
+            <div class="panel-header-row">
+              <span class="panel-title">🏷️ Legenda do Território</span>
+              <button class="btn-close-panel">✖</button>
+            </div>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                font-size: 0.85rem;
+              "
+            >
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span class="layer-badge-icon" style="background: #10b981"
+                  >🌱</span
+                >
+                <span><strong>Missão:</strong> Ações contínuas de impacto</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span class="layer-badge-icon" style="background: #f59e0b"
+                  >🤝</span
+                >
+                <span
+                  ><strong>Mutirão:</strong> Eventos coletivos pontuais</span
+                >
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span class="layer-badge-icon" style="background: #8b5cf6"
+                  >📷</span
+                >
+                <span
+                  ><strong>Memória:</strong> Fotos e relatos históricos</span
+                >
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span class="layer-badge-icon" style="background: #ef4444"
+                  >📍</span
+                >
+                <span
+                  ><strong>Marcador:</strong> Pontos de atenção ou alertas</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- DIV DO MAPA LEAFLET -->
+          <div id="map"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- =========================================================================
+       3. MODAL DE CRIAÇÃO (+ Nova Missão)
+       ========================================================================= -->
+    <div class="modal-backdrop" id="creation-modal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title">Novo Elemento no Mapa</h2>
+          <button class="btn-sidebar-toggle" id="btn-close-modal-x">✖</button>
+        </div>
+
+        <div class="modal-tabs">
+          <button class="modal-tab active">🌱 Missão</button>
+          <button class="modal-tab">🤝 Mutirão</button>
+          <button class="modal-tab">📷 Memória</button>
+          <button class="modal-tab">📍 Marcador</button>
+        </div>
+
+        <form id="creation-form">
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Título da Missão</label>
+              <input
+                type="text"
+                id="input-titulo"
+                class="form-input"
+                placeholder="Ex: Recuperação da Nascente Sarapuí"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Descrição da Ação</label>
+              <textarea
+                class="form-textarea"
+                rows="3"
+                placeholder="Descreva os objetivos, impacto esperado e como os voluntários podem participar..."
+              ></textarea>
+            </div>
+
+            <div class="form-group" id="group-vinculo-missao">
+              <label class="form-label">Vincular à Missão</label>
+              <select class="form-select" id="select-missao-pai">
+                <option value="Recuperação da nascente Sarapuí">
+                  🌱 Recuperação da nascente Sarapuí
+                </option>
+                <option value="Horta Comunitária Urbana">
+                  🌱 Horta Comunitária Urbana
+                </option>
+                <option value="Reflorestamento de Encosta">
+                  🌱 Reflorestamento de Encosta
+                </option>
+                <option value="Monitoramento da Qualidade da Água">
+                  🌱 Monitoramento da Qualidade da Água
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Categoria</label>
+              <select class="form-select">
+                <option>🌱 Meio Ambiente & Reflorestamento</option>
+                <option>💧 Proteção de Nascentes e Rios</option>
+                <option>⚠️ Prevenção de Alagamentos e Riscos</option>
+                <option>🥦 Agricultura Urbana e Hortas</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Prazo Estimado</label>
+              <input type="date" class="form-input" value="2026-09-30" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="btn-cancel-modal">
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="card-btn card-btn-primary"
+              style="width: auto; padding: 10px 20px"
+            >
+              Criar Missão
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Script Principal da Aplicação -->
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

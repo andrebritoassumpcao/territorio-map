@@ -1,0 +1,256 @@
+1. O Mapa como Repositório Colaborativo
+O briefing diz:
+"Cada mapa é um projeto que pertence a alguém e pode receber contribuições de outras pessoas mediante permissão."
+Dúvidas de negócio
+Um usuário pode criar quantos mapas?
+Sem limite?
+Existe limite para organizações?
+Não
+Um mapa pode trocar de proprietário?
+Sim
+O proprietário pode excluir definitivamente um mapa?
+Sim
+Existe arquivamento?
+Sim
+Existe histórico de alterações (versionamento)?
+Sim
+Um mapa pode ser duplicado (fork), semelhante ao GitHub?
+Sim
+
+O briefing diz:
+"O dono do mapa define quem pode colaborar."
+Dúvidas
+Como ocorre essa colaboração?
+A pessoa pede colaboração pro dono mas pode fazer fork e criar seu próprio mapa
+Por convite?
+Sim, via link
+Link compartilhável?
+Link compartilhável pra chamar pessoas pra colaborarem em um mapa
+Solicitação de acesso?
+Sim
+A colaboração precisa de aprovação?
+Sim
+Existe prazo para convites?
+Sim, a ser definido no momento da criação do link. 1 dia, 7 dias, 30 dias, permanente
+
+O briefing diz:
+"O criador controla a visibilidade (público ou privado) e o nível de acesso (visualizar, sugerir, editar)."
+Dúvidas
+Existem apenas esses três níveis de permissão?
+Sim
+Existe um administrador além do proprietário?
+Quem pode alterar permissões?
+O proprietário do mapa
+Quem pode remover colaboradores?
+O proprietário do mapa
+Existe acesso somente leitura para usuários anônimos?
+Apenas se o mapa for publico
+
+2. Sistema de Estrelas e Insígnias
+O briefing diz:
+"Usuários podem dar estrela a um mapa."
+Dúvidas
+Cada usuário pode dar apenas uma estrela?
+Sim 
+Pode remover a estrela depois?
+Sim
+Pode favoritar o próprio mapa?
+Sim
+Estrelas possuem peso diferente conforme o perfil do usuário?
+Não
+
+O briefing diz:
+"A quantidade de estrelas recebidas gera insígnias."
+Dúvidas
+Quais são as regras para conquistar insígnias?
+Permitir 
+
+Existem níveis?
+As insígnias dependem apenas de estrelas?
+Existem outras formas de conquista?
+
+3. Funcionalidades do mapa
+O briefing diz:
+"Visualizar, criar, importar e exportar dados geoespaciais."
+Dúvidas
+Quem pode importar dados?
+O proprietário do mapa e os com permissão de edição
+Existe validação antes da importação?
+Verificar tamanho do arquivo e tipo de extensão
+
+O briefing diz:
+"Visualizar dados qualitativos e quantitativos."
+Dúvidas
+Quais indicadores fazem parte da primeira versão?
+Quantidade de mapas
+Quantidade de colaboradores
+Quantidade de missões
+Quantidade de mutirões
+Quantidade de memórias
+Quantidade de marcações
+Quantidade de estrelas
+
+Esses indicadores são configuráveis?
+MVP
+Não.
+Todos são fixos.
+São calculados automaticamente?
+Sim.
+Sempre derivados da própria base de dados.
+Qual é a origem desses dados?
+Somente dados internos da plataforma.
+Nada vindo de APIs externas na primeira versão.
+
+
+4. Elementos Geográficos
+O briefing diz:
+"Marcadores, linhas, polígonos, camadas, anotações e estilos."
+Dúvidas
+Quem pode criar elementos?
+Owner
+Editor
+
+Quem pode editar?
+Owner
+Editor
+Autor da marcação (se continuar colaborador)
+
+Um elemento pertence apenas a um mapa?
+Para mim sim.
+Isso simplifica muito o banco.
+
+Pode existir em várias camadas?
+Sim.
+A camada funciona como um agrupador.
+
+Exclusão lógica ou física?
+MVP
+Exclusão lógica.
+Muito mais seguro.
+
+Existem categorias?
+Sim.
+Mas poucas.
+Exemplo
+Missão
+Memória
+Alerta
+Mutirão
+Outro
+Depois pode expandir.
+
+Existe versionamento?
+Eu deixaria apenas para o mapa.
+
+5. Missões
+O briefing diz:
+"Integrar as ações realizadas na plataforma (missões, alertas, mutirões e memórias)."
+Dúvidas
+O que caracteriza uma missão?
+Missão = objetivo
+Mutirão = evento para executar aquele objetivo
+
+Quem pode criar?
+	Owner
+Editor
+Uma missão sempre possui localização?
+	Sim
+Pode existir sem um mapa?
+Não.
+Ela nasce dentro de um mapa.
+
+Pode estar vinculada a mais de um local?
+Não no MVP.
+Como uma missão é concluída?
+	Status
+Aberta
+Em andamento
+Concluída
+Cancelada
+
+Existe aprovação?
+	Não.
+Quem edita pode concluir.
+ao menos se for uma sugestão de outro usuário
+
+6. Mutirões
+O briefing diz:
+"O mapa reúne missões, mutirões, memórias e dados ambientais."
+Dúvidas
+Qual é a relação entre missão e mutirão?
+	Uma missão
+↓
+Possui um ou mais mutirões.
+
+Um mutirão sempre pertence a uma missão?
+Sim
+Quem organiza?
+O proprietário do mapa e colaboradores com permissão de edição podem criar mutirões diretamente.
+Colaboradores com permissão de visualização ou sugestão podem propor a criação de um mutirão em um ponto do mapa. Essa proposta gera uma solicitação pendente que deve ser aprovada pelo proprietário (ou por um editor, caso essa permissão exista) antes de se tornar um mutirão oficial.
+Regra de negócio (MVP):
+Owner/Editor: cria mutirão imediatamente.
+Colaborador (Sugestão): cria uma proposta de mutirão.
+Owner: aprova ou rejeita a proposta.
+
+Existe limite de participantes?
+Não.
+Cada mutirão pode definir opcionalmente uma capacidade máxima.
+Se nenhuma capacidade for informada, o número de participantes é ilimitado.
+
+Possui calendário?
+Implementado já no sistema atual
+Como um participante confirma presença?
+Implementado já no sistema atual
+
+7. Memórias
+O briefing diz:
+"Trilha de memórias (acervo)."
+Dúvidas
+O que pode ser registrado como memória?
+Foto
+Vídeo
+Texto
+Documento
+Uma memória sempre possui geolocalização?
+Sim
+Pode receber comentários?
+Sim
+Pode ser editada após publicada?
+Sim
+
+8. Interoperabilidade (PRÓXIMA ETAPA)
+O briefing diz:
+"Receber, integrar e disponibilizar dados de origens diversas."
+Dúvidas
+Quais fontes externas serão suportadas inicialmente?
+Os dados importados podem ser editados?
+Como lidar com dados duplicados?
+Existe sincronização automática?
+Os dados permanecem vinculados à origem?
+
+O briefing diz:
+"Exportar dados em formatos abertos."
+Dúvidas
+Quais formatos serão suportados na primeira versão?
+Todos os usuários poderão exportar?
+Existe limitação para mapas privados?
+
+9. API futura (PRÓXIMA ETAPA)
+O briefing diz:
+"Permissão de API para puxar mapeamentos de emergências realizados por outras plataformas."
+Dúvidas
+A integração será apenas de leitura ou também de escrita?
+Os dados externos poderão ser modificados?
+Como será feita a autenticação?
+Como conflitos entre plataformas serão tratados?
+
+10. Performance
+O briefing diz:
+"Avaliar o comportamento do mapa com muitas camadas e marcações simultâneas."
+Dúvidas
+Existe um limite esperado de camadas por mapa?
+Qual o volume estimado de marcações?
+Será utilizado carregamento por região (viewport)?
+Haverá clusterização de marcadores?
+Como será tratada a renderização em dispositivos móveis?
+
