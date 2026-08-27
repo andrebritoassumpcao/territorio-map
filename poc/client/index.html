@@ -559,65 +559,181 @@
         </div>
 
         <div class="modal-tabs">
-          <button class="modal-tab active">🌱 Missão</button>
-          <button class="modal-tab">🤝 Mutirão</button>
-          <button class="modal-tab">📷 Memória</button>
-          <button class="modal-tab">📍 Marcador</button>
+          <button type="button" class="modal-tab active" data-tab="missao">🌱 Missão</button>
+          <button type="button" class="modal-tab" data-tab="mutirao">🤝 Mutirão</button>
+          <button type="button" class="modal-tab" data-tab="memoria">📷 Memória</button>
+          <button type="button" class="modal-tab" data-tab="marcador">📍 Marcador</button>
         </div>
 
         <form id="creation-form">
           <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label">Título da Missão</label>
-              <input
-                type="text"
-                id="input-titulo"
-                class="form-input"
-                placeholder="Ex: Recuperação da Nascente Sarapuí"
-                required
-              />
+            <!-- 1. ABA MISSÃO -->
+            <div class="tab-panel active" id="tab-content-missao">
+              <div class="form-group">
+                <label class="form-label" for="input-titulo-missao">Título da Missão *</label>
+                <input
+                  type="text"
+                  id="input-titulo-missao"
+                  class="form-input"
+                  placeholder="Ex: Recuperação da Nascente Sarapuí"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="input-descricao-missao">Descrição da Ação</label>
+                <textarea
+                  id="input-descricao-missao"
+                  class="form-textarea"
+                  rows="3"
+                  placeholder="Descreva os objetivos, impacto esperado e como os voluntários podem participar..."
+                ></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="select-categoria-missao">Categoria</label>
+                <select id="select-categoria-missao" class="form-select">
+                  <option value="Meio Ambiente">🌱 Meio Ambiente & Reflorestamento</option>
+                  <option value="Proteção de Nascentes">💧 Proteção de Nascentes e Rios</option>
+                  <option value="Prevenção de Riscos">⚠️ Prevenção de Alagamentos e Riscos</option>
+                  <option value="Agricultura Urbana">🥦 Agricultura Urbana e Hortas</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="input-prazo-missao">Prazo Estimado</label>
+                <input type="date" id="input-prazo-missao" class="form-input" value="2026-09-30" />
+              </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Descrição da Ação</label>
-              <textarea
-                class="form-textarea"
-                rows="3"
-                placeholder="Descreva os objetivos, impacto esperado e como os voluntários podem participar..."
-              ></textarea>
+            <!-- 2. ABA MUTIRÃO -->
+            <div class="tab-panel" id="tab-content-mutirao" style="display: none;">
+              <p class="tab-description-text">
+                🤝 Vincule um mutirão já planejado a este ponto do território para mobilizar a comunidade local.
+              </p>
+
+              <div class="form-group">
+                <label class="form-label" for="select-mutirao-existente">Selecione o Mutirão Existente *</label>
+                <select id="select-mutirao-existente" class="form-select">
+                  <option value="Mutirão da Horta Comunitária">🤝 Mutirão da Horta Comunitária (Sábado, 09:00)</option>
+                  <option value="Mutirão Limpeza do Rio Sarapuí">🤝 Mutirão Limpeza do Rio Sarapuí (Domingo, 08:30)</option>
+                  <option value="Mutirão Plantio de Mudas">🤝 Mutirão Plantio de Mudas (15/09, 14:00)</option>
+                  <option value="Mutirão Pintura do Centro Comunitário">🤝 Mutirão Pintura do Centro Comunitário (22/09, 09:00)</option>
+                </select>
+                <span class="form-helper-text">O mutirão selecionado será fixado na localização do mapa.</span>
+              </div>
             </div>
 
-            <div class="form-group" id="group-vinculo-missao">
-              <label class="form-label">Vincular à Missão</label>
-              <select class="form-select" id="select-missao-pai">
-                <option value="Recuperação da nascente Sarapuí">
-                  🌱 Recuperação da nascente Sarapuí
-                </option>
-                <option value="Horta Comunitária Urbana">
-                  🌱 Horta Comunitária Urbana
-                </option>
-                <option value="Reflorestamento de Encosta">
-                  🌱 Reflorestamento de Encosta
-                </option>
-                <option value="Monitoramento da Qualidade da Água">
-                  🌱 Monitoramento da Qualidade da Água
-                </option>
-              </select>
+            <!-- 3. ABA MEMÓRIA -->
+            <div class="tab-panel" id="tab-content-memoria" style="display: none;">
+              <p class="tab-description-text">
+                📷 Registre uma memória fotográfica da comunidade para preservar a história e transformações do território.
+              </p>
+
+              <div class="form-group">
+                <label class="form-label">Foto da Memória *</label>
+                <div class="dropzone-box" id="dropzone-memoria">
+                  <input type="file" id="input-foto-memoria" accept="image/*" class="file-input-hidden" />
+                  <div class="dropzone-prompt" id="dropzone-prompt">
+                    <span class="dropzone-icon">📷</span>
+                    <span class="dropzone-text">Clique ou arraste uma imagem aqui</span>
+                    <span class="dropzone-subtext">Formatos aceitos: JPG, PNG, WebP</span>
+                  </div>
+                  <div class="dropzone-preview hidden" id="dropzone-preview">
+                    <img id="img-preview-memoria" src="" alt="Pré-visualização da memória" />
+                    <button type="button" class="btn-remove-photo" id="btn-remove-photo">Remover foto</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="input-titulo-memoria">Título ou Legenda da Memória *</label>
+                <input
+                  type="text"
+                  id="input-titulo-memoria"
+                  class="form-input"
+                  placeholder="Ex: Mutirão de plantio de árvores em 2024"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="input-data-memoria">Data do Registro</label>
+                <input type="date" id="input-data-memoria" class="form-input" value="2026-08-25" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="select-vinculo-memoria">Vincular a uma Missão/Mutirão (Opcional)</label>
+                <select id="select-vinculo-memoria" class="form-select">
+                  <option value="">Nenhum vínculo (Memória autônoma)</option>
+                  <option value="Recuperação da nascente Sarapuí">🌱 Recuperação da nascente Sarapuí</option>
+                  <option value="Horta Comunitária Urbana">🌱 Horta Comunitária Urbana</option>
+                  <option value="Mutirão Limpeza do Rio Sarapuí">🤝 Mutirão Limpeza do Rio Sarapuí</option>
+                </select>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Categoria</label>
-              <select class="form-select">
-                <option>🌱 Meio Ambiente & Reflorestamento</option>
-                <option>💧 Proteção de Nascentes e Rios</option>
-                <option>⚠️ Prevenção de Alagamentos e Riscos</option>
-                <option>🥦 Agricultura Urbana e Hortas</option>
-              </select>
-            </div>
+            <!-- 4. ABA MARCADOR -->
+            <div class="tab-panel" id="tab-content-marcador" style="display: none;">
+              <p class="tab-description-text">
+                📍 Adicione um ponto no mapa para alertar a comunidade ou destacar um local de interesse territorial.
+              </p>
 
-            <div class="form-group">
-              <label class="form-label">Prazo Estimado</label>
-              <input type="date" class="form-input" value="2026-09-30" />
+              <div class="form-group">
+                <label class="form-label">Tipo de Marcador *</label>
+                <div class="marcador-type-selector">
+                  <label class="marcador-option active" id="option-tipo-alerta">
+                    <input type="radio" name="tipo-marcador" value="alerta" checked class="radio-hidden" />
+                    <div class="marcador-option-content">
+                      <span class="marcador-icon">🚨</span>
+                      <div>
+                        <strong>Alerta Comunitário</strong>
+                        <small>Descarte de lixo, risco, alagamento ou manutenção</small>
+                      </div>
+                    </div>
+                  </label>
+                  <label class="marcador-option" id="option-tipo-interesse">
+                    <input type="radio" name="tipo-marcador" value="interesse" class="radio-hidden" />
+                    <div class="marcador-option-content">
+                      <span class="marcador-icon">📍</span>
+                      <div>
+                        <strong>Ponto de Interesse</strong>
+                        <small>Nascente, equipamento comunitário, sede ou referência</small>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="input-titulo-marcador">Título do Marcador *</label>
+                <input
+                  type="text"
+                  id="input-titulo-marcador"
+                  class="form-input"
+                  placeholder="Ex: Descarte irregular na curva do córrego"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="select-categoria-marcador">Categoria / Severidade</label>
+                <select id="select-categoria-marcador" class="form-select">
+                  <option value="Alagamento / Risco">⚠️ Alagamento / Água parada</option>
+                  <option value="Lixo / Entulho">🗑️ Descarte Irregular de Entulho</option>
+                  <option value="Esgoto / Saneamento">💧 Saneamento / Vazamento</option>
+                  <option value="Equipamento Social">🏠 Equipamento Comunitário</option>
+                  <option value="Nascente / Natureza">🌿 Nascente / Ponto Verde</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="input-descricao-marcador">Observação / Detalhes</label>
+                <textarea
+                  id="input-descricao-marcador"
+                  class="form-textarea"
+                  rows="2"
+                  placeholder="Adicione detalhes para ajudar a comunidade a identificar a situação..."
+                ></textarea>
+              </div>
             </div>
           </div>
 
@@ -627,6 +743,7 @@
             </button>
             <button
               type="submit"
+              id="btn-submit-modal"
               class="card-btn card-btn-primary"
               style="width: auto; padding: 10px 20px"
             >

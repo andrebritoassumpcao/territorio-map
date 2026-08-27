@@ -1047,6 +1047,163 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Modal Tab Content & Component Styles */
+.tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+.tab-description-text {
+  background: #f8fafc;
+  border-left: 4px solid var(--primary);
+  padding: 10px 14px;
+  font-size: 0.84rem;
+  color: #475569;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.form-helper-text {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* Image Dropzone for Memória */
+.dropzone-box {
+  border: 2px dashed #cbd5e1;
+  border-radius: var(--radius-md);
+  padding: 20px 16px;
+  text-align: center;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropzone-box:hover {
+  border-color: var(--primary);
+  background: #f0fdf4;
+}
+
+.file-input-hidden {
+  display: none !important;
+}
+
+.dropzone-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dropzone-icon {
+  font-size: 2rem;
+  margin-bottom: 2px;
+}
+
+.dropzone-text {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.dropzone-subtext {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.dropzone-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.dropzone-preview img {
+  max-height: 180px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-remove-photo {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-remove-photo:hover {
+  background: #dc2626;
+}
+
+/* Marcador Type Selector Cards */
+.marcador-type-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.marcador-option {
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+  user-select: none;
+}
+
+.marcador-option.active#option-tipo-alerta {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.marcador-option.active#option-tipo-interesse {
+  border-color: #06b6d4;
+  background: #ecfeff;
+}
+
+.marcador-option-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.marcador-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.marcador-option-content strong {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
+
+.marcador-option-content small {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.radio-hidden {
+  display: none;
+}
+
 /* Utilities */
 .hidden {
   display: none !important;

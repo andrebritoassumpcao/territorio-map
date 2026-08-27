@@ -462,87 +462,326 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 6. MODAL DE CRIAÇÃO (+ Nova Missão)
+  // 6. MODAL DE CRIAÇÃO (+ Novo Elemento)
   const btnNovaMissao = document.getElementById('btn-nova-missao');
   const creationModal = document.getElementById('creation-modal');
   const btnCancelModal = document.getElementById('btn-cancel-modal');
   const btnCloseModalX = document.getElementById('btn-close-modal-x');
   const creationForm = document.getElementById('creation-form');
   const modalTabs = document.querySelectorAll('.modal-tab');
+  const btnSubmitModal = document.getElementById('btn-submit-modal');
+  let currentActiveTab = 'missao';
+
+  // Memória Upload Elements
+  const dropzoneMemoria = document.getElementById('dropzone-memoria');
+  const inputFotoMemoria = document.getElementById('input-foto-memoria');
+  const dropzonePrompt = document.getElementById('dropzone-prompt');
+  const dropzonePreview = document.getElementById('dropzone-preview');
+  const imgPreviewMemoria = document.getElementById('img-preview-memoria');
+  const btnRemovePhoto = document.getElementById('btn-remove-photo');
+  let loadedMemoriaPhoto = null;
+
+  // Marcador Radio Elements
+  const optionTipoAlerta = document.getElementById('option-tipo-alerta');
+  const optionTipoInteresse = document.getElementById('option-tipo-interesse');
 
   function openModal() {
-    creationModal.classList.add('open');
+    if (creationModal) creationModal.classList.add('open');
   }
 
   function closeModal() {
-    creationModal.classList.remove('open');
+    if (creationModal) creationModal.classList.remove('open');
   }
 
   if (btnNovaMissao) btnNovaMissao.addEventListener('click', openModal);
   if (btnCancelModal) btnCancelModal.addEventListener('click', closeModal);
   if (btnCloseModalX) btnCloseModalX.addEventListener('click', closeModal);
 
+  // Alternância de Abas no Modal
+  function setActiveTab(tabName) {
+    currentActiveTab = tabName;
+
+    // Atualiza estado visual das abas
+    modalTabs.forEach(tab => {
+      const isTarget = tab.dataset.tab === tabName;
+      tab.classList.toggle('active', isTarget);
+    });
+
+    // Exibe o painel de conteúdo correto e ajusta os campos obrigatórios
+    const panels = document.querySelectorAll('.tab-panel');
+    panels.forEach(panel => {
+      const isTargetPanel = panel.id === `tab-content-${tabName}`;
+      panel.style.display = isTargetPanel ? 'flex' : 'none';
+      
+      // Ajusta o 'required' dos inputs para não bloquear o submit de abas ocultas
+      const inputs = panel.querySelectorAll('input, select, textarea');
+      inputs.forEach(input => {
+        if (isTargetPanel) {
+          if (input.dataset.originalRequired === 'true') {
+            input.required = true;
+          }
+        } else {
+          if (input.required) {
+            input.dataset.originalRequired = 'true';
+            input.required = false;
+          }
+        }
+      });
+    });
+
+    // Atualiza o texto e estilo do botão de confirmação conforme o UX Writing da aba
+    if (btnSubmitModal) {
+      btnSubmitModal.className = 'card-btn';
+      if (tabName === 'missao') {
+        btnSubmitModal.classList.add('card-btn-primary');
+        btnSubmitModal.textContent = 'Criar Missão';
+      } else if (tabName === 'mutirao') {
+        btnSubmitModal.classList.add('card-btn-amber');
+        btnSubmitModal.textContent = 'Vincular Mutirão';
+      } else if (tabName === 'memoria') {
+        btnSubmitModal.classList.add('card-btn-purple');
+        btnSubmitModal.textContent = 'Salvar Memória';
+      } else if (tabName === 'marcador') {
+        btnSubmitModal.classList.add('card-btn-primary');
+        btnSubmitModal.textContent = 'Adicionar Marcador';
+      }
+    }
+  }
+
   modalTabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      modalTabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+      setActiveTab(tab.dataset.tab || 'missao');
     });
   });
 
+  // Upload de Imagem na aba Memória
+  if (dropzoneMemoria && inputFotoMemoria) {
+    dropzoneMemoria.addEventListener('click', (e) => {
+      if (e.target !== btnRemovePhoto) {
+        inputFotoMemoria.click();
+      }
+    });
+
+    inputFotoMemoria.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          loadedMemoriaPhoto = event.target.result;
+          imgPreviewMemoria.src = loadedMemoriaPhoto;
+          dropzonePrompt.classList.add('hidden');
+          dropzonePreview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    if (btnRemovePhoto) {
+      btnRemovePhoto.addEventListener('click', (e) => {
+        e.stopPropagation();
+        loadedMemoriaPhoto = null;
+        inputFotoMemoria.value = '';
+        imgPreviewMemoria.src = '';
+        dropzonePreview.classList.add('hidden');
+        dropzonePrompt.classList.remove('hidden');
+      });
+    }
+
+    // Suporte a Drag and Drop
+    dropzoneMemoria.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzoneMemoria.style.borderColor = 'var(--primary)';
+    });
+    dropzoneMemoria.addEventListener('dragleave', () => {
+      dropzoneMemoria.style.borderColor = '#cbd5e1';
+    });
+    dropzoneMemoria.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzoneMemoria.style.borderColor = '#cbd5e1';
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        inputFotoMemoria.files = e.dataTransfer.files;
+        const event = new Event('change');
+        inputFotoMemoria.dispatchEvent(event);
+      }
+    });
+  }
+
+  // Seleção de Tipo de Marcador (Alerta vs Ponto de Interesse)
+  if (optionTipoAlerta && optionTipoInteresse) {
+    optionTipoAlerta.addEventListener('click', () => {
+      optionTipoAlerta.classList.add('active');
+      optionTipoInteresse.classList.remove('active');
+      optionTipoAlerta.querySelector('input').checked = true;
+    });
+
+    optionTipoInteresse.addEventListener('click', () => {
+      optionTipoInteresse.classList.add('active');
+      optionTipoAlerta.classList.remove('active');
+      optionTipoInteresse.querySelector('input').checked = true;
+    });
+  }
+
+  // Submit do Formulário do Modal
   if (creationForm) {
     creationForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const titleInput = document.getElementById('input-titulo').value || 'Nova Missão no Sarapuí';
-      
-      // Simular novo waypoint adicionado no centro do mapa
       const center = map.getCenter();
-      const newIcon = createCustomIcon(
-        `<div class="marker-badge missao">🌱</div>`,
-        titleInput
-      );
-      
-      const newPopup = `
-        <div class="context-card">
-          <div class="card-header-badge">
-            <span class="card-type-tag missao">🌱 Missão</span>
-            <span class="card-status">🟢 Recém-criada</span>
-          </div>
-          <h3 class="card-title">${titleInput}</h3>
-          <div class="card-meta">
-            <div class="card-meta-item">📅 Prazo: <strong>31/12/2026</strong></div>
-            <div class="card-meta-item">👥 Participantes: <strong>1 participante (Você)</strong></div>
-          </div>
-          <button class="card-btn card-btn-primary" onclick="showToast('Detalhes da missão!')">Ver missão</button>
-        </div>
-      `;
 
-      L.marker([center.lat, center.lng], { icon: newIcon })
-        .bindPopup(newPopup)
-        .addTo(layerGroups.missoes);
+      if (currentActiveTab === 'missao') {
+        const titleInput = document.getElementById('input-titulo-missao').value || 'Nova Missão no Território';
+        const descInput = document.getElementById('input-descricao-missao').value || 'Ação comunitária para melhoria local.';
+        const catInput = document.getElementById('select-categoria-missao').value;
+        const prazoInput = document.getElementById('input-prazo-missao').value;
 
+        const newIcon = createCustomIcon(
+          `<div class="marker-badge missao">🌱</div>`,
+          titleInput
+        );
+
+        const newPopup = `
+          <div class="context-card">
+            <div class="card-header-badge">
+              <span class="card-type-tag missao">🌱 Missão</span>
+              <span class="card-status">🟢 Ativa</span>
+            </div>
+            <h3 class="card-title">${titleInput}</h3>
+            <p style="font-size: 0.82rem; color: #475569; margin: 4px 0 10px;">${descInput}</p>
+            <div class="card-meta">
+              <div class="card-meta-item">🏷️ Categoria: <strong>${catInput}</strong></div>
+              <div class="card-meta-item">📅 Prazo: <strong>${prazoInput}</strong></div>
+              <div class="card-meta-item">👥 Participantes: <strong>1 participante (Você)</strong></div>
+            </div>
+            <button class="card-btn card-btn-primary" onclick="showToast('Detalhes da missão!')">Ver missão</button>
+          </div>
+        `;
+
+        L.marker([center.lat, center.lng], { icon: newIcon })
+          .bindPopup(newPopup)
+          .addTo(layerGroups.missoes);
+
+        showToast(`✨ Missão "${titleInput}" criada com sucesso!`);
+
+      } else if (currentActiveTab === 'mutirao') {
+        const mutiraoTitle = document.getElementById('select-mutirao-existente').value;
+
+        const newIcon = createCustomIcon(
+          `<div class="marker-badge mutirao">🤝</div>`,
+          mutiraoTitle
+        );
+
+        const newPopup = `
+          <div class="context-card">
+            <div class="card-header-badge">
+              <span class="card-type-tag mutirao">🤝 Mutirão Vinculado</span>
+              <span class="card-status">🟡 Confirmado</span>
+            </div>
+            <h3 class="card-title">${mutiraoTitle}</h3>
+            <div class="card-meta">
+              <div class="card-meta-item">📍 Ponto marcado no território</div>
+              <div class="card-meta-item">👥 Mobilização comunitária ativa</div>
+            </div>
+            <button class="card-btn card-btn-amber" onclick="showToast('Inscrição no mutirão!')">Quero Participar</button>
+          </div>
+        `;
+
+        L.marker([center.lat, center.lng], { icon: newIcon })
+          .bindPopup(newPopup)
+          .addTo(layerGroups.mutiroes);
+
+        showToast(`🤝 "${mutiraoTitle}" foi vinculado a esta localização!`);
+
+      } else if (currentActiveTab === 'memoria') {
+        const memoriaTitle = document.getElementById('input-titulo-memoria').value || 'Memória Fotográfica';
+        const memoriaData = document.getElementById('input-data-memoria').value;
+        const memoriaVinculo = document.getElementById('select-vinculo-memoria').value;
+        const photoSrc = loadedMemoriaPhoto || 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400&q=80';
+
+        const newIcon = createCustomIcon(
+          `<div class="marker-badge memoria">📷</div>`,
+          memoriaTitle
+        );
+
+        const newPopup = `
+          <div class="context-card">
+            <div class="card-header-badge">
+              <span class="card-type-tag memoria">📷 Memória</span>
+              <span class="card-status">💜 Registrada</span>
+            </div>
+            <h3 class="card-title">${memoriaTitle}</h3>
+            <div style="margin: 8px 0;">
+              <img src="${photoSrc}" alt="${memoriaTitle}" style="width: 100%; height: 130px; object-fit: cover; border-radius: 8px;" />
+            </div>
+            <div class="card-meta">
+              <div class="card-meta-item">📅 Data: <strong>${memoriaData}</strong></div>
+              ${memoriaVinculo ? `<div class="card-meta-item">🔗 Vinculada a: <strong>${memoriaVinculo}</strong></div>` : ''}
+            </div>
+          </div>
+        `;
+
+        L.marker([center.lat, center.lng], { icon: newIcon })
+          .bindPopup(newPopup)
+          .addTo(layerGroups.memorias);
+
+        showToast(`📷 Memória "${memoriaTitle}" salva no mapa!`);
+
+      } else if (currentActiveTab === 'marcador') {
+        const tipoMarcador = document.querySelector('input[name="tipo-marcador"]:checked')?.value || 'alerta';
+        const marcadorTitle = document.getElementById('input-titulo-marcador').value || 'Marcador Territorial';
+        const marcadorCat = document.getElementById('select-categoria-marcador').value;
+        const marcadorDesc = document.getElementById('input-descricao-marcador').value || 'Anotação comunitária no território.';
+
+        const iconSymbol = tipoMarcador === 'alerta' ? '🚨' : '📍';
+        const badgeClass = tipoMarcador === 'alerta' ? 'alerta' : 'marcador';
+        const tagTitle = tipoMarcador === 'alerta' ? '🚨 Alerta Comunitário' : '📍 Ponto de Interesse';
+
+        const newIcon = createCustomIcon(
+          `<div class="marker-badge ${badgeClass}">${iconSymbol}</div>`,
+          marcadorTitle
+        );
+
+        const newPopup = `
+          <div class="context-card">
+            <div class="card-header-badge">
+              <span class="card-type-tag ${badgeClass}">${tagTitle}</span>
+              <span class="card-status">🔴 Ativo</span>
+            </div>
+            <h3 class="card-title">${marcadorTitle}</h3>
+            <p style="font-size: 0.82rem; color: #475569; margin: 4px 0 10px;">${marcadorDesc}</p>
+            <div class="card-meta">
+              <div class="card-meta-item">🏷️ Categoria: <strong>${marcadorCat}</strong></div>
+            </div>
+          </div>
+        `;
+
+        L.marker([center.lat, center.lng], { icon: newIcon })
+          .bindPopup(newPopup)
+          .addTo(layerGroups.marcadores);
+
+        showToast(`${iconSymbol} Marcador "${marcadorTitle}" adicionado ao mapa!`);
+      }
+
+      // Resetar formulário e fechar modal
       closeModal();
       creationForm.reset();
-      showToast(`✨ "${titleInput}" foi criada e adicionada ao mapa!`);
+      if (btnRemovePhoto && loadedMemoriaPhoto) {
+        btnRemovePhoto.click();
+      }
+      setActiveTab('missao');
     });
   }
 
   // 7. FUNÇÃO PARA CRIAR MUTIRÃO VINCULADO À MISSÃO
   window.openCreateMutiraoForMissao = function(missaoTitulo) {
     if (creationModal) {
-      creationModal.classList.add('open');
-      
-      // Selecionar a aba de Mutirão
-      modalTabs.forEach(t => t.classList.remove('active'));
-      const mutiraoTab = Array.from(modalTabs).find(t => t.textContent.includes('Mutirão'));
-      if (mutiraoTab) mutiraoTab.classList.add('active');
+      openModal();
+      setActiveTab('mutirao');
 
-      // Pré-selecionar a missão no select
-      const selectMissao = document.getElementById('select-missao-pai');
-      if (selectMissao) {
-        selectMissao.value = missaoTitulo;
+      // Selecionar o mutirão ou adicionar aviso no toast
+      const selectMutirao = document.getElementById('select-mutirao-existente');
+      if (selectMutirao) {
+        selectMutirao.focus();
       }
-
-      showToast(`🤝 Criando mutirão para a missão: "${missaoTitulo}"`);
+      showToast(`🤝 Selecione o mutirão existente para associar à missão "${missaoTitulo}"`);
     }
   };
 
