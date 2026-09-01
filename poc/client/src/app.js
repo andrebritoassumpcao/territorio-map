@@ -40,6 +40,28 @@ document.addEventListener('DOMContentLoaded', () => {
     areas: L.layerGroup().addTo(map)
   };
 
+  const ICON = {
+    sprout: './assets/icons/sprout.svg',
+    users: './assets/icons/users.svg',
+    camera: './assets/icons/camera.svg',
+    pin: './assets/icons/map-pin.svg'
+  };
+
+  function iconImg(src, size = 16) {
+    return `<span class="ds-icon" style="width:${size}px;height:${size}px"><img src="${src}" alt="" width="${size}" height="${size}"></span>`;
+  }
+
+  function typeBadge(type) {
+    const src = {
+      missao: ICON.sprout,
+      mutirao: ICON.users,
+      memoria: ICON.camera,
+      marcador: ICON.pin,
+      alerta: ICON.pin
+    }[type] || ICON.pin;
+    return `<div class="marker-badge ${type}">${iconImg(src, 18)}</div>`;
+  }
+
   // 3. DADOS MOCKADOS DOS WAYPOINTS
 
   // (A) MISSÕES (🌱 Verde)
@@ -121,6 +143,13 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   // (C) MEMÓRIAS (📷 Roxo)
+  const extraFotos = [
+    'https://images.unsplash.com/photo-1466692476866-aef1dfb1d5ea?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1591857177580-dc84b9c4b8b2?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=600&q=80'
+  ];
+
   const memoriasData = [
     {
       id: 'mem1',
@@ -131,7 +160,10 @@ document.addEventListener('DOMContentLoaded', () => {
       data: '12/08/2026',
       fotoUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80',
       descricao: 'Registro fotográfico da área antes do plantio comunitário e obras de macrodrenagem.',
-      tipo: 'memoria'
+      tipo: 'memoria',
+      comentarios: [
+        { initials: 'AW', name: 'Amanda', date: '13/08/2026', text: 'Importante ter esse registro do antes.' }
+      ]
     },
     {
       id: 'mem2',
@@ -142,7 +174,10 @@ document.addEventListener('DOMContentLoaded', () => {
       data: '04/03/2026',
       fotoUrl: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80',
       descricao: 'Nível da água na Avenida Comendador Teles durante a tempestade de verão.',
-      tipo: 'memoria'
+      tipo: 'memoria',
+      comentarios: [
+        { initials: 'JS', name: 'José', date: '05/03/2026', text: 'Nunca tinha visto a água tão alta.' }
+      ]
     },
     {
       id: 'mem3',
@@ -153,9 +188,18 @@ document.addEventListener('DOMContentLoaded', () => {
       data: '19/05/2026',
       fotoUrl: 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=600&q=80',
       descricao: 'Celebração da comunidade com a primeira colheita orgânica do bairro.',
-      tipo: 'memoria'
+      tipo: 'memoria',
+      comentarios: [
+        { initials: 'MD', name: 'Maria', date: '19/05/2026', text: 'Que momento incrível! A horta ficou linda' },
+        { initials: 'CS', name: 'Carlos', date: '20/05/2026', text: 'Parabéns a todos que participaram! Vamos marcar a próxima colheita.' },
+        { initials: 'AL', name: 'Ana', date: '20/05/2026', text: 'As crianças adoraram participar!' }
+      ]
     }
   ];
+
+  memoriasData.forEach(item => {
+    item.fotos = [item.fotoUrl, ...extraFotos];
+  });
 
   // (D) MARCADORES (📍 Vermelho/Teal)
   const marcadoresData = [
@@ -197,17 +241,121 @@ document.addEventListener('DOMContentLoaded', () => {
   // Fallback de Imagem Confiável caso haja falha de conexão
   const fallbackImg = 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80';
 
+  const memoryModal = document.getElementById('memory-modal');
+  const memoryFeatured = document.getElementById('memory-featured');
+  const memoryThumbs = document.getElementById('memory-thumbs');
+  const memoryCommentsList = document.getElementById('memory-comments-list');
+  const memoryCommentInput = document.getElementById('memory-comment-input');
+  let currentMemory = null;
+
+  function renderMemoryComments(comments) {
+    if (!memoryCommentsList) return;
+    memoryCommentsList.innerHTML = comments.map(c => `
+      <div class="comment-row">
+        <div class="comment-avatar">${c.initials}</div>
+        <div class="comment-content">
+          <div class="comment-meta">
+            <span class="comment-name">${c.name}</span>
+            <span class="comment-date">${c.date}</span>
+          </div>
+          <p class="comment-text">${c.text}</p>
+        </div>
+      </div>
+    `).join('');
+    const countEl = document.getElementById('memory-comments-count');
+    if (countEl) countEl.textContent = String(comments.length);
+  }
+
+  function setMemoryFeatured(src, activeIndex) {
+    if (memoryFeatured) {
+      memoryFeatured.src = src;
+      memoryFeatured.onerror = () => { memoryFeatured.src = fallbackImg; };
+    }
+    if (memoryThumbs) {
+      memoryThumbs.querySelectorAll('.memory-thumb').forEach((btn, i) => {
+        btn.classList.toggle('active', i === activeIndex);
+      });
+    }
+  }
+
+  function openMemoryModal(item) {
+    currentMemory = item;
+    const authorEl = document.getElementById('memory-author');
+    const titleEl = document.getElementById('memory-title');
+    const descEl = document.getElementById('memory-description');
+    if (authorEl) authorEl.textContent = `${item.autor} • ${item.data}`;
+    if (titleEl) titleEl.textContent = item.titulo;
+    if (descEl) descEl.textContent = item.descricao;
+
+    const fotos = item.fotos || [item.fotoUrl];
+    if (memoryThumbs) {
+      memoryThumbs.innerHTML = fotos.map((src, i) => `
+        <button type="button" class="memory-thumb${i === 0 ? ' active' : ''}" data-index="${i}">
+          <img src="${src}" alt="Miniatura ${i + 1}" onerror="this.onerror=null; this.src='${fallbackImg}';" />
+        </button>
+      `).join('');
+      memoryThumbs.querySelectorAll('.memory-thumb').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.dataset.index);
+          setMemoryFeatured(fotos[idx], idx);
+        });
+      });
+    }
+    setMemoryFeatured(fotos[0], 0);
+    renderMemoryComments(item.comentarios || []);
+    if (memoryCommentInput) memoryCommentInput.value = '';
+    if (memoryModal) memoryModal.classList.add('open');
+  }
+
+  function closeMemoryModal() {
+    if (memoryModal) memoryModal.classList.remove('open');
+    currentMemory = null;
+  }
+
+  const btnCloseMemory = document.getElementById('btn-close-memory');
+  if (btnCloseMemory) btnCloseMemory.addEventListener('click', closeMemoryModal);
+  if (memoryModal) {
+    memoryModal.addEventListener('click', (e) => {
+      if (e.target === memoryModal) closeMemoryModal();
+    });
+  }
+
+  const memorySendBtn = document.getElementById('memory-send-btn');
+  if (memorySendBtn) {
+    memorySendBtn.addEventListener('click', () => {
+      const text = (memoryCommentInput?.value || '').trim();
+      if (!text || !currentMemory) return;
+      if (!currentMemory.comentarios) currentMemory.comentarios = [];
+      currentMemory.comentarios.push({
+        initials: 'AW',
+        name: 'Amanda',
+        date: '01/09/2026',
+        text
+      });
+      renderMemoryComments(currentMemory.comentarios);
+      memoryCommentInput.value = '';
+    });
+  }
+  if (memoryCommentInput) {
+    memoryCommentInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        memorySendBtn?.click();
+      }
+    });
+  }
+
   // Renderizar Missões
   missoesData.forEach(item => {
     const icon = createCustomIcon(
-      `<div class="marker-badge missao">🌱</div>`,
+      typeBadge('missao'),
       item.titulo
     );
     const popupContent = `
       <div class="context-card">
         <div class="card-header-badge">
-          <span class="card-type-tag missao">🌱 Missão</span>
-          <span class="card-status">🟢 ${item.status}</span>
+          <span class="card-type-tag missao">Missão</span>
+          <span class="card-status">${item.status}</span>
         </div>
         <h3 class="card-title">${item.titulo}</h3>
         <div class="card-meta">
@@ -227,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Ver detalhes da missão →
           </button>
           <button class="card-btn card-btn-outline-amber" onclick="openCreateMutiraoForMissao('${item.titulo}')">
-            🤝 Criar mutirão para esta missão
+            Criar mutirão para esta missão
           </button>
         </div>
       </div>
@@ -240,13 +388,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Renderizar Mutirões
   mutiroesData.forEach(item => {
     const icon = createCustomIcon(
-      `<div class="marker-badge mutirao">🤝</div>`,
+      typeBadge('mutirao'),
       item.titulo
     );
     const popupContent = `
       <div class="context-card">
         <div class="card-header-badge">
-          <span class="card-type-tag mutirao">🤝 Mutirão</span>
+          <span class="card-type-tag mutirao">Mutirão</span>
         </div>
         <h3 class="card-title">${item.titulo}</h3>
         <p style="font-size:0.78rem; color: var(--text-muted); margin-bottom: 4px;">
@@ -257,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="card-meta-item">👥 Vagas: <strong>${item.vagas}</strong></div>
         </div>
         <button class="card-btn card-btn-amber" onclick="showToast('Inscrição confirmada no mutirão!')">
-          🤝 Participar do mutirão
+          Participar do mutirão
         </button>
       </div>
     `;
@@ -273,44 +421,28 @@ document.addEventListener('DOMContentLoaded', () => {
       html: `
         <div class="custom-marker">
           <img src="${item.fotoUrl}" class="marker-thumb" alt="Thumb" onerror="this.onerror=null; this.src='${fallbackImg}';" />
-          <span class="marker-label">📷 ${item.titulo}</span>
+          <span class="marker-label">${item.titulo}</span>
         </div>
       `,
       iconSize: [140, 44],
       iconAnchor: [22, 22]
     });
 
-    const popupContent = `
-      <div class="context-card">
-        <div class="card-header-badge">
-          <span class="card-type-tag memoria">📷 Memória</span>
-          <span class="card-status">${item.autor} • ${item.data}</span>
-        </div>
-        <h3 class="card-title">${item.titulo}</h3>
-        <div class="card-photo-frame">
-          <img src="${item.fotoUrl}" alt="Memória" onerror="this.onerror=null; this.src='${fallbackImg}';" />
-        </div>
-        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">${item.descricao}</p>
-        <button class="card-btn card-btn-purple" onclick="showToast('Abrindo acervo da memória...')">
-          📷 Ver memória completa
-        </button>
-      </div>
-    `;
     L.marker([item.lat, item.lng], { icon })
-      .bindPopup(popupContent)
+      .on('click', () => openMemoryModal(item))
       .addTo(layerGroups.memorias);
   });
 
   // Renderizar Marcadores
   marcadoresData.forEach(item => {
     const icon = createCustomIcon(
-      `<div class="marker-badge marcador">📍</div>`,
+      typeBadge('marcador'),
       item.titulo
     );
     const popupContent = `
       <div class="context-card">
         <div class="card-header-badge">
-          <span class="card-type-tag" style="background:#fee2e2; color:#991b1b;">📍 Marcador</span>
+          <span class="card-type-tag marcador">Marcador</span>
         </div>
         <h3 class="card-title">${item.titulo}</h3>
         <p style="font-size: 0.82rem; color: var(--text-muted);">${item.descricao}</p>
@@ -334,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
     dashArray: '6, 6',
     fillColor: '#10b981',
     fillOpacity: 0.2
-  }).bindTooltip('🟢 Área de Preservação Rio Sarapuí', { permanent: false }).addTo(layerGroups.areas);
+  }).bindTooltip('Área de Preservação Rio Sarapuí', { permanent: false }).addTo(layerGroups.areas);
 
   const area2Coords = [
     [-22.786, -43.349],
@@ -348,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
     dashArray: '4, 4',
     fillColor: '#f59e0b',
     fillOpacity: 0.25
-  }).bindTooltip('⚠️ Zoneamento de Risco de Enchente', { permanent: false }).addTo(layerGroups.areas);
+  }).bindTooltip('Zoneamento de Risco de Enchente', { permanent: false }).addTo(layerGroups.areas);
 
   // 5. INTERAÇÕES E CONTROLES DE INTERFACE
 
@@ -370,6 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   toolButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
+      closeDrawingMode();
       const targetPanelId = btn.getAttribute('data-panel');
       const targetPanel = document.getElementById(targetPanelId);
 
@@ -444,21 +577,56 @@ document.addEventListener('DOMContentLoaded', () => {
   // Modo Desenho (Drawing Tool Sub-bar)
   const btnDesenhar = document.getElementById('tool-desenhar');
   const drawingSubbar = document.getElementById('drawing-subbar');
-  const btnCloseDraw = document.getElementById('btn-close-draw');
 
-  if (btnDesenhar) {
+  function closeDrawingMode() {
+    if (drawingSubbar) drawingSubbar.classList.add('hidden');
+    if (btnDesenhar) btnDesenhar.classList.remove('active');
+  }
+
+  if (btnDesenhar && drawingSubbar) {
     btnDesenhar.addEventListener('click', () => {
-      drawingSubbar.classList.toggle('hidden');
-      if (!drawingSubbar.classList.contains('hidden')) {
-        showToast('🎨 Modo de desenho ativado! Escolha uma ferramenta abaixo.');
+      floatingPanels.forEach(panel => panel.classList.add('hidden'));
+      toolButtons.forEach(b => b.classList.remove('active'));
+      const willOpen = drawingSubbar.classList.contains('hidden');
+      drawingSubbar.classList.toggle('hidden', !willOpen);
+      btnDesenhar.classList.toggle('active', willOpen);
+      if (willOpen) {
+        showToast('Modo de desenho ativado. Escolha uma ferramenta abaixo.');
       }
+    });
+
+    drawingSubbar.querySelectorAll('.draw-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        drawingSubbar.querySelectorAll('.draw-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const mode = btn.getAttribute('data-draw');
+        if (mode === 'linha') showToast('Modo de desenho de linha ativado');
+        if (mode === 'poligono') showToast('Modo de polígono ativado');
+      });
     });
   }
 
-  if (btnCloseDraw) {
-    btnCloseDraw.addEventListener('click', () => {
-      drawingSubbar.classList.add('hidden');
-      if (btnDesenhar) btnDesenhar.classList.remove('active');
+  // Dropdown de categoria (Filtros de Exibição)
+  const filterTrigger = document.getElementById('filter-category-trigger');
+  const filterMenu = document.getElementById('filter-category-menu');
+  const filterLabel = document.getElementById('filter-category-label');
+
+  if (filterTrigger && filterMenu) {
+    filterTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = !filterMenu.classList.contains('hidden');
+      filterMenu.classList.toggle('hidden', isOpen);
+      filterTrigger.setAttribute('aria-expanded', String(!isOpen));
+    });
+
+    filterMenu.querySelectorAll('.filter-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        filterMenu.querySelectorAll('.filter-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        if (filterLabel) filterLabel.textContent = opt.textContent.trim();
+        filterMenu.classList.add('hidden');
+        filterTrigger.setAttribute('aria-expanded', 'false');
+      });
     });
   }
 
@@ -486,6 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const optionTipoInteresse = document.getElementById('option-tipo-interesse');
 
   function openModal() {
+    closeDrawingMode();
     if (creationModal) creationModal.classList.add('open');
   }
 
@@ -634,15 +803,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const prazoInput = document.getElementById('input-prazo-missao').value;
 
         const newIcon = createCustomIcon(
-          `<div class="marker-badge missao">🌱</div>`,
+          typeBadge('missao'),
           titleInput
         );
 
         const newPopup = `
           <div class="context-card">
             <div class="card-header-badge">
-              <span class="card-type-tag missao">🌱 Missão</span>
-              <span class="card-status">🟢 Ativa</span>
+              <span class="card-type-tag missao">Missão</span>
+              <span class="card-status">Ativa</span>
             </div>
             <h3 class="card-title">${titleInput}</h3>
             <p style="font-size: 0.82rem; color: #475569; margin: 4px 0 10px;">${descInput}</p>
@@ -659,26 +828,26 @@ document.addEventListener('DOMContentLoaded', () => {
           .bindPopup(newPopup)
           .addTo(layerGroups.missoes);
 
-        showToast(`✨ Missão "${titleInput}" criada com sucesso!`);
+        showToast(`Missão "${titleInput}" criada com sucesso.`);
 
       } else if (currentActiveTab === 'mutirao') {
         const mutiraoTitle = document.getElementById('select-mutirao-existente').value;
 
         const newIcon = createCustomIcon(
-          `<div class="marker-badge mutirao">🤝</div>`,
+          typeBadge('mutirao'),
           mutiraoTitle
         );
 
         const newPopup = `
           <div class="context-card">
             <div class="card-header-badge">
-              <span class="card-type-tag mutirao">🤝 Mutirão Vinculado</span>
-              <span class="card-status">🟡 Confirmado</span>
+              <span class="card-type-tag mutirao">Mutirão Vinculado</span>
+              <span class="card-status">Confirmado</span>
             </div>
             <h3 class="card-title">${mutiraoTitle}</h3>
             <div class="card-meta">
-              <div class="card-meta-item">📍 Ponto marcado no território</div>
-              <div class="card-meta-item">👥 Mobilização comunitária ativa</div>
+              <div class="card-meta-item">Ponto marcado no território</div>
+              <div class="card-meta-item">Mobilização comunitária ativa</div>
             </div>
             <button class="card-btn card-btn-amber" onclick="showToast('Inscrição no mutirão!')">Quero Participar</button>
           </div>
@@ -688,7 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
           .bindPopup(newPopup)
           .addTo(layerGroups.mutiroes);
 
-        showToast(`🤝 "${mutiraoTitle}" foi vinculado a esta localização!`);
+        showToast(`"${mutiraoTitle}" foi vinculado a esta localização.`);
 
       } else if (currentActiveTab === 'memoria') {
         const memoriaTitle = document.getElementById('input-titulo-memoria').value || 'Memória Fotográfica';
@@ -697,32 +866,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const photoSrc = loadedMemoriaPhoto || 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400&q=80';
 
         const newIcon = createCustomIcon(
-          `<div class="marker-badge memoria">📷</div>`,
+          typeBadge('memoria'),
           memoriaTitle
         );
 
-        const newPopup = `
-          <div class="context-card">
-            <div class="card-header-badge">
-              <span class="card-type-tag memoria">📷 Memória</span>
-              <span class="card-status">💜 Registrada</span>
-            </div>
-            <h3 class="card-title">${memoriaTitle}</h3>
-            <div style="margin: 8px 0;">
-              <img src="${photoSrc}" alt="${memoriaTitle}" style="width: 100%; height: 130px; object-fit: cover; border-radius: 8px;" />
-            </div>
-            <div class="card-meta">
-              <div class="card-meta-item">📅 Data: <strong>${memoriaData}</strong></div>
-              ${memoriaVinculo ? `<div class="card-meta-item">🔗 Vinculada a: <strong>${memoriaVinculo}</strong></div>` : ''}
-            </div>
-          </div>
-        `;
+        const newMemoria = {
+          titulo: memoriaTitle,
+          autor: 'Amanda',
+          data: memoriaData,
+          fotoUrl: photoSrc,
+          descricao: memoriaVinculo ? `Vinculada a: ${memoriaVinculo}` : 'Memória fotográfica da comunidade.',
+          fotos: [photoSrc, ...extraFotos],
+          comentarios: []
+        };
 
         L.marker([center.lat, center.lng], { icon: newIcon })
-          .bindPopup(newPopup)
+          .on('click', () => openMemoryModal(newMemoria))
           .addTo(layerGroups.memorias);
 
-        showToast(`📷 Memória "${memoriaTitle}" salva no mapa!`);
+        showToast(`Memória "${memoriaTitle}" salva no mapa.`);
 
       } else if (currentActiveTab === 'marcador') {
         const tipoMarcador = document.querySelector('input[name="tipo-marcador"]:checked')?.value || 'alerta';
@@ -730,12 +892,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const marcadorCat = document.getElementById('select-categoria-marcador').value;
         const marcadorDesc = document.getElementById('input-descricao-marcador').value || 'Anotação comunitária no território.';
 
-        const iconSymbol = tipoMarcador === 'alerta' ? '🚨' : '📍';
         const badgeClass = tipoMarcador === 'alerta' ? 'alerta' : 'marcador';
-        const tagTitle = tipoMarcador === 'alerta' ? '🚨 Alerta Comunitário' : '📍 Ponto de Interesse';
+        const tagTitle = tipoMarcador === 'alerta' ? 'Alerta Comunitário' : 'Ponto de Interesse';
 
         const newIcon = createCustomIcon(
-          `<div class="marker-badge ${badgeClass}">${iconSymbol}</div>`,
+          typeBadge(badgeClass),
           marcadorTitle
         );
 
@@ -743,12 +904,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="context-card">
             <div class="card-header-badge">
               <span class="card-type-tag ${badgeClass}">${tagTitle}</span>
-              <span class="card-status">🔴 Ativo</span>
+              <span class="card-status">Ativo</span>
             </div>
             <h3 class="card-title">${marcadorTitle}</h3>
             <p style="font-size: 0.82rem; color: #475569; margin: 4px 0 10px;">${marcadorDesc}</p>
             <div class="card-meta">
-              <div class="card-meta-item">🏷️ Categoria: <strong>${marcadorCat}</strong></div>
+              <div class="card-meta-item">Categoria: <strong>${marcadorCat}</strong></div>
             </div>
           </div>
         `;
@@ -757,7 +918,7 @@ document.addEventListener('DOMContentLoaded', () => {
           .bindPopup(newPopup)
           .addTo(layerGroups.marcadores);
 
-        showToast(`${iconSymbol} Marcador "${marcadorTitle}" adicionado ao mapa!`);
+        showToast(`Marcador "${marcadorTitle}" adicionado ao mapa.`);
       }
 
       // Resetar formulário e fechar modal
@@ -781,7 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (selectMutirao) {
         selectMutirao.focus();
       }
-      showToast(`🤝 Selecione o mutirão existente para associar à missão "${missaoTitulo}"`);
+      showToast(`Selecione o mutirão existente para associar à missão "${missaoTitulo}"`);
     }
   };
 
@@ -797,7 +958,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const toast = document.createElement('div');
     toast.className = 'toast';
-    toast.innerHTML = `<span>ℹ️</span> <span>${message}</span>`;
+    toast.innerHTML = `<span>${message}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {

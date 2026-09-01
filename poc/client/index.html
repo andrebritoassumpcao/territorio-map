@@ -40,19 +40,9 @@
               id="btn-sidebar-toggle"
               title="Recolher menu"
             >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="9" y1="3" x2="9" y2="21"></line>
-              </svg>
+            <span class="ds-icon ds-icon-20">
+              <img src="./assets/icons/panel-left.svg" alt="" width="20" height="20" />
+            </span>
             </button>
           </div>
 
@@ -163,30 +153,15 @@
             id="btn-topbar-sidebar-toggle"
             title="Alternar sidebar"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="9" y1="3" x2="9" y2="21"></line>
-            </svg>
+            <span class="ds-icon ds-icon-20">
+              <img src="./assets/icons/panel-left.svg" alt="" width="20" height="20" />
+            </span>
           </button>
 
           <div class="search-container">
-            <svg
-              class="search-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+            <span class="search-icon">
+              <img src="./assets/icons/search.svg" alt="" width="18" height="18" />
+            </span>
             <input
               type="text"
               class="search-input"
@@ -195,17 +170,9 @@
           </div>
 
           <button class="btn-icon notification-btn" title="Notificações">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
+            <span class="ds-icon ds-icon-20">
+              <img src="./assets/icons/bell.svg" alt="" width="20" height="20" />
+            </span>
             <span class="notification-badge"></span>
           </button>
         </header>
@@ -214,251 +181,170 @@
         <div class="map-container">
           <!-- Toolbar Flutuante Superior (Estilo Felt) -->
           <div class="floating-toolbar">
-            <button
-              class="tool-btn active"
-              id="tool-select"
-              title="Ferramenta de seleção"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <polygon
-                  points="3 3 3 16 9 12 13 21 16 19 12 10 19 9 3 3"
-                ></polygon>
-              </svg>
-              <span>Selecionar</span>
-            </button>
-
             <button class="tool-btn btn-primary-action" id="btn-nova-missao">
-              <span>+ Novo Marcador</span>
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/plus.svg" alt="" width="16" height="16" />
+              </span>
+              <span>Novo Marcador</span>
             </button>
-
-            <div class="tool-divider"></div>
 
             <button class="tool-btn" id="tool-desenhar">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
-                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
-                <path d="M2 2l7.586 7.586"></path>
-                <circle cx="11" cy="11" r="2"></circle>
-              </svg>
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/star.svg" alt="" width="16" height="16" />
+              </span>
               <span>Desenhar</span>
             </button>
 
             <button class="tool-btn" data-panel="layers-panel">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
-              </svg>
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/layers.svg" alt="" width="16" height="16" />
+              </span>
               <span>Camadas</span>
             </button>
 
-            <button class="tool-btn" data-panel="legend-panel">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
-                ></path>
-                <line x1="7" y1="7" x2="7.01" y2="7"></line>
-              </svg>
-              <span>Legenda</span>
-            </button>
-
             <button class="tool-btn" data-panel="filters-panel">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <polygon
-                  points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
-                ></polygon>
-              </svg>
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/filter.svg" alt="" width="16" height="16" />
+              </span>
               <span>Filtros</span>
-            </button>
-
-            <button class="tool-btn" title="Mais opções">
-              <span>⋯</span>
             </button>
           </div>
 
           <!-- Sub-Toolbar de Desenho (Aparece ao clicar em Desenhar) -->
           <div class="drawing-subbar hidden" id="drawing-subbar">
-            <span>Modo Desenho:</span>
+            <span class="drawing-mode-label">Modo Desenho:</span>
             <button
+              type="button"
               class="draw-btn"
-              onclick="showToast('Modo de desenho de linha ativado')"
+              data-draw="linha"
             >
-              ✏️ Linha
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/pencil.svg" alt="" width="16" height="16" />
+              </span>
+              <span>Linha</span>
             </button>
             <button
-              class="draw-btn"
-              onclick="showToast('Modo de polígono ativado')"
+              type="button"
+              class="draw-btn active"
+              data-draw="poligono"
             >
-              ⬡ Polígono
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/pentagon.svg" alt="" width="16" height="16" />
+              </span>
+              <span>Polígono</span>
             </button>
-            <button
-              class="draw-btn"
-              onclick="showToast('Modo de ponto de interesse ativado')"
-            >
-              📍 Ponto
-            </button>
-            <button class="btn-close-draw" id="btn-close-draw">✖ Sair</button>
           </div>
 
-          <!-- Painel Flutuante de Camadas (Layers Drawer) -->
+          <!-- Painel Flutuante de Camadas -->
           <div class="floating-panel hidden" id="layers-panel">
             <div class="panel-header-row">
-              <span class="panel-title">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                  <polyline points="2 17 12 22 22 17"></polyline>
-                  <polyline points="2 12 12 17 22 12"></polyline>
-                </svg>
-                Camadas do Mapa
-              </span>
-              <button class="btn-close-panel">✖</button>
+              <div class="panel-title-group">
+                <span class="ds-icon ds-icon-18">
+                  <img src="./assets/icons/layers.svg" alt="" width="18" height="18" />
+                </span>
+                <span class="panel-title">Camadas do Mapa</span>
+              </div>
+              <button class="btn-close-panel" type="button" aria-label="Fechar">
+                <span class="ds-icon ds-icon-14">
+                  <img src="./assets/icons/x.svg" alt="" width="14" height="14" />
+                </span>
+              </button>
             </div>
-
+            <div class="panel-divider"></div>
             <ul class="layer-list">
               <li class="layer-item">
-                <div class="layer-item-left">
-                  <input
-                    type="checkbox"
-                    class="checkbox-custom layer-checkbox"
-                    data-layer="missoes"
-                    checked
-                  />
-                  <span class="layer-badge-icon" style="background: #10b981"
-                    >🌱</span
-                  >
-                  <span>Missões</span>
-                </div>
+                <label class="layer-row">
+                  <input type="checkbox" class="layer-checkbox" data-layer="missoes" checked />
+                  <span class="ds-checkbox" aria-hidden="true">
+                    <img src="./assets/icons/check.svg" alt="" width="12" height="12" />
+                  </span>
+                  <span class="layer-badge missao">
+                    <span class="ds-icon ds-icon-16">
+                      <img src="./assets/icons/sprout.svg" alt="" width="16" height="16" />
+                    </span>
+                  </span>
+                  <span class="layer-label">Missões</span>
+                </label>
               </li>
               <li class="layer-item">
-                <div class="layer-item-left">
-                  <input
-                    type="checkbox"
-                    class="checkbox-custom layer-checkbox"
-                    data-layer="mutiroes"
-                    checked
-                  />
-                  <span class="layer-badge-icon" style="background: #f59e0b"
-                    >🤝</span
-                  >
-                  <span>Mutirões</span>
-                </div>
+                <label class="layer-row">
+                  <input type="checkbox" class="layer-checkbox" data-layer="mutiroes" checked />
+                  <span class="ds-checkbox" aria-hidden="true">
+                    <img src="./assets/icons/check.svg" alt="" width="12" height="12" />
+                  </span>
+                  <span class="layer-badge mutirao">
+                    <span class="ds-icon ds-icon-16">
+                      <img src="./assets/icons/users.svg" alt="" width="16" height="16" />
+                    </span>
+                  </span>
+                  <span class="layer-label">Mutirões</span>
+                </label>
               </li>
               <li class="layer-item">
-                <div class="layer-item-left">
-                  <input
-                    type="checkbox"
-                    class="checkbox-custom layer-checkbox"
-                    data-layer="memorias"
-                    checked
-                  />
-                  <span class="layer-badge-icon" style="background: #8b5cf6"
-                    >📷</span
-                  >
-                  <span>Memórias</span>
-                </div>
+                <label class="layer-row">
+                  <input type="checkbox" class="layer-checkbox" data-layer="memorias" checked />
+                  <span class="ds-checkbox" aria-hidden="true">
+                    <img src="./assets/icons/check.svg" alt="" width="12" height="12" />
+                  </span>
+                  <span class="layer-badge memoria">
+                    <span class="ds-icon ds-icon-16">
+                      <img src="./assets/icons/camera.svg" alt="" width="16" height="16" />
+                    </span>
+                  </span>
+                  <span class="layer-label">Memórias</span>
+                </label>
               </li>
               <li class="layer-item">
-                <div class="layer-item-left">
-                  <input
-                    type="checkbox"
-                    class="checkbox-custom layer-checkbox"
-                    data-layer="marcadores"
-                    checked
-                  />
-                  <span class="layer-badge-icon" style="background: #ef4444"
-                    >📍</span
-                  >
-                  <span>Marcadores</span>
-                </div>
+                <label class="layer-row">
+                  <input type="checkbox" class="layer-checkbox" data-layer="marcadores" checked />
+                  <span class="ds-checkbox" aria-hidden="true">
+                    <img src="./assets/icons/check.svg" alt="" width="12" height="12" />
+                  </span>
+                  <span class="layer-badge marcador">
+                    <span class="ds-icon ds-icon-16">
+                      <img src="./assets/icons/map-pin.svg" alt="" width="16" height="16" />
+                    </span>
+                  </span>
+                  <span class="layer-label">Marcadores</span>
+                </label>
               </li>
               <li class="layer-item">
-                <div class="layer-item-left">
-                  <input
-                    type="checkbox"
-                    class="checkbox-custom layer-checkbox"
-                    data-layer="areas"
-                    checked
-                  />
-                  <span class="layer-badge-icon" style="background: #06b6d4"
-                    >🟢</span
-                  >
-                  <span>Áreas de intervenção</span>
-                </div>
+                <label class="layer-row">
+                  <input type="checkbox" class="layer-checkbox" data-layer="areas" checked />
+                  <span class="ds-checkbox" aria-hidden="true">
+                    <img src="./assets/icons/check.svg" alt="" width="12" height="12" />
+                  </span>
+                  <span class="layer-badge areas">
+                    <span class="ds-icon ds-icon-16">
+                      <img src="./assets/icons/box.svg" alt="" width="16" height="16" />
+                    </span>
+                  </span>
+                  <span class="layer-label">Áreas de intervenção</span>
+                </label>
               </li>
-              <li class="layer-item" style="opacity: 0.6">
-                <div class="layer-item-left">
-                  <input type="checkbox" class="checkbox-custom" disabled />
-                  <span class="layer-badge-icon" style="background: #94a3b8"
-                    >🏠</span
-                  >
-                  <span>Infraestrutura comunitária</span>
-                </div>
+              <li class="layer-item is-disabled">
+                <label class="layer-row">
+                  <input type="checkbox" class="layer-checkbox" disabled />
+                  <span class="ds-checkbox" aria-hidden="true"></span>
+                  <span class="layer-badge infra">
+                    <span class="ds-icon ds-icon-16">
+                      <img src="./assets/icons/home.svg" alt="" width="16" height="16" />
+                    </span>
+                  </span>
+                  <span class="layer-label">Infraestrutura comunitária</span>
+                </label>
               </li>
             </ul>
-
-            <div
-              style="
-                border-top: 1px solid var(--border-color);
-                padding-top: 10px;
-                margin-top: 4px;
-              "
-            >
-              <span
-                style="
-                  font-size: 0.78rem;
-                  font-weight: 700;
-                  color: var(--text-muted);
-                  text-transform: uppercase;
-                "
-                >Mapa Base</span
-              >
+            <div class="panel-divider"></div>
+            <div class="mapa-base-section">
+              <p class="section-label">Mapa Base</p>
               <div class="map-base-selector">
-                <div class="base-option active" data-base="satellite">
+                <button type="button" class="base-option active" data-base="satellite">
                   Satélite
-                </div>
-                <div class="base-option" data-base="street">Vetorial</div>
+                </button>
+                <button type="button" class="base-option" data-base="street">
+                  Vetorial
+                </button>
               </div>
             </div>
           </div>
@@ -466,78 +352,125 @@
           <!-- Painel Flutuante de Filtros -->
           <div class="floating-panel hidden" id="filters-panel">
             <div class="panel-header-row">
-              <span class="panel-title">🎛️ Filtros de Exibição</span>
-              <button class="btn-close-panel">✖</button>
+              <span class="panel-title panel-title-overline">Filtros de exibição</span>
             </div>
-            <div
-              style="
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                font-size: 0.88rem;
-              "
-            >
-              <label><strong>Status da Missão:</strong></label>
-              <label><input type="checkbox" checked /> 🟢 Em andamento</label>
-              <label><input type="checkbox" checked /> 🟡 Planejadas</label>
-              <label><input type="checkbox" checked /> ✅ Concluídas</label>
-
-              <label style="margin-top: 8px"><strong>Categoria:</strong></label>
-              <select
-                class="form-select"
-                style="font-size: 0.8rem; padding: 6px"
+            <div class="panel-divider"></div>
+            <div class="filter-status-section">
+              <p class="filter-section-label">Status da Missão:</p>
+              <label class="filter-status-row">
+                <input type="checkbox" class="filter-status-checkbox" data-status="andamento" checked />
+                <span class="ds-checkbox ds-checkbox-blue" aria-hidden="true">
+                  <img src="./assets/icons/check-sm.svg" alt="" width="10" height="8" />
+                </span>
+                <img class="status-dot" src="./assets/icons/indicator-green.svg" alt="" width="16" height="16" />
+                <span>Em andamento</span>
+              </label>
+              <label class="filter-status-row">
+                <input type="checkbox" class="filter-status-checkbox" data-status="planejadas" checked />
+                <span class="ds-checkbox ds-checkbox-blue" aria-hidden="true">
+                  <img src="./assets/icons/check-sm.svg" alt="" width="10" height="8" />
+                </span>
+                <img class="status-dot" src="./assets/icons/indicator-gold.svg" alt="" width="16" height="16" />
+                <span>Planejadas</span>
+              </label>
+              <label class="filter-status-row">
+                <input type="checkbox" class="filter-status-checkbox" data-status="concluidas" checked />
+                <span class="ds-checkbox ds-checkbox-blue" aria-hidden="true">
+                  <img src="./assets/icons/check-sm.svg" alt="" width="10" height="8" />
+                </span>
+                <span class="status-done" aria-hidden="true">
+                  <img src="./assets/icons/check-sm.svg" alt="" width="10" height="8" />
+                </span>
+                <span>Concluídas</span>
+              </label>
+            </div>
+            <div class="filter-category-section">
+              <p class="filter-section-label">Categoria:</p>
+              <button
+                type="button"
+                class="filter-select-trigger"
+                id="filter-category-trigger"
+                aria-expanded="false"
+                aria-haspopup="listbox"
               >
-                <option>Todas as categorias</option>
-                <option>Meio Ambiente</option>
-                <option>Recursos Hídricos</option>
-                <option>Riscos e Alagamentos</option>
-              </select>
+                <span id="filter-category-label">Todas as categorias</span>
+                <span class="ds-icon" style="width: 10px; height: 6px">
+                  <img src="./assets/icons/chevron-down.svg" alt="" width="10" height="6" />
+                </span>
+              </button>
+              <ul class="filter-dropdown hidden" id="filter-category-menu" role="listbox">
+                <li>
+                  <button type="button" class="filter-option selected" data-value="todas">
+                    Todas as categorias
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="filter-option" data-value="meio-ambiente">
+                    Meio Ambiente
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="filter-option" data-value="recursos-hidricos">
+                    Recursos Hídricos
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="filter-option" data-value="riscos">
+                    Riscos e Alagamentos
+                  </button>
+                </li>
+              </ul>
             </div>
           </div>
 
           <!-- Painel Flutuante de Legenda -->
           <div class="floating-panel hidden" id="legend-panel">
             <div class="panel-header-row">
-              <span class="panel-title">🏷️ Legenda do Território</span>
-              <button class="btn-close-panel">✖</button>
+              <div class="panel-title-group">
+                <span class="ds-icon ds-icon-18">
+                  <img src="./assets/icons/tag.svg" alt="" width="18" height="18" />
+                </span>
+                <span class="panel-title">Legenda do Território</span>
+              </div>
+              <button class="btn-close-panel" type="button" aria-label="Fechar">
+                <span class="ds-icon ds-icon-14">
+                  <img src="./assets/icons/x.svg" alt="" width="14" height="14" />
+                </span>
+              </button>
             </div>
-            <div
-              style="
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                font-size: 0.85rem;
-              "
-            >
-              <div style="display: flex; align-items: center; gap: 8px">
-                <span class="layer-badge-icon" style="background: #10b981"
-                  >🌱</span
-                >
+            <div class="panel-divider"></div>
+            <div class="legend-list">
+              <div class="legend-row">
+                <span class="layer-badge missao">
+                  <span class="ds-icon ds-icon-16">
+                    <img src="./assets/icons/sprout.svg" alt="" width="16" height="16" />
+                  </span>
+                </span>
                 <span><strong>Missão:</strong> Ações contínuas de impacto</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 8px">
-                <span class="layer-badge-icon" style="background: #f59e0b"
-                  >🤝</span
-                >
-                <span
-                  ><strong>Mutirão:</strong> Eventos coletivos pontuais</span
-                >
+              <div class="legend-row">
+                <span class="layer-badge mutirao">
+                  <span class="ds-icon ds-icon-16">
+                    <img src="./assets/icons/users.svg" alt="" width="16" height="16" />
+                  </span>
+                </span>
+                <span><strong>Mutirão:</strong> Eventos coletivos pontuais</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 8px">
-                <span class="layer-badge-icon" style="background: #8b5cf6"
-                  >📷</span
-                >
-                <span
-                  ><strong>Memória:</strong> Fotos e relatos históricos</span
-                >
+              <div class="legend-row">
+                <span class="layer-badge memoria">
+                  <span class="ds-icon ds-icon-16">
+                    <img src="./assets/icons/camera.svg" alt="" width="16" height="16" />
+                  </span>
+                </span>
+                <span><strong>Memória:</strong> Fotos e relatos históricos</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 8px">
-                <span class="layer-badge-icon" style="background: #ef4444"
-                  >📍</span
-                >
-                <span
-                  ><strong>Marcador:</strong> Pontos de atenção ou alertas</span
-                >
+              <div class="legend-row">
+                <span class="layer-badge marcador">
+                  <span class="ds-icon ds-icon-16">
+                    <img src="./assets/icons/map-pin.svg" alt="" width="16" height="16" />
+                  </span>
+                </span>
+                <span><strong>Marcador:</strong> Pontos de atenção ou alertas</span>
               </div>
             </div>
           </div>
@@ -549,20 +482,79 @@
     </div>
 
     <!-- =========================================================================
-       3. MODAL DE CRIAÇÃO (+ Nova Missão)
+       3. MODAL DE VISUALIZAÇÃO DE MEMÓRIA
+       ========================================================================= -->
+    <div class="modal-backdrop" id="memory-modal" role="dialog" aria-modal="true" aria-labelledby="memory-title">
+      <div class="memory-modal-card">
+        <div class="memory-modal-header">
+          <div class="memory-meta-row">
+            <span class="badge-memoria">Memória</span>
+            <div class="memory-author-close">
+              <span class="memory-author" id="memory-author">João • 19/05/2026</span>
+              <button type="button" class="btn-close-panel" id="btn-close-memory" aria-label="Fechar">
+                <span class="ds-icon ds-icon-14">
+                  <img src="./assets/icons/close.svg" alt="" width="14" height="14" />
+                </span>
+              </button>
+            </div>
+          </div>
+          <h2 class="memory-title" id="memory-title">Primeira colheita da horta</h2>
+        </div>
+        <div class="memory-gallery">
+          <img class="memory-featured" id="memory-featured" src="" alt="Foto da memória" />
+          <div class="memory-thumbs" id="memory-thumbs"></div>
+        </div>
+        <p class="memory-description" id="memory-description"></p>
+        <div class="memory-comments">
+          <div class="memory-comments-header">
+            <h3>Comentários</h3>
+            <span class="comments-count" id="memory-comments-count">0</span>
+          </div>
+          <div class="memory-comments-list" id="memory-comments-list"></div>
+        </div>
+        <div class="memory-input-footer">
+          <input
+            type="text"
+            class="memory-comment-field"
+            id="memory-comment-input"
+            placeholder="Escreva um comentário..."
+          />
+          <button type="button" class="memory-send-btn" id="memory-send-btn">Enviar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+       4. MODAL DE CRIAÇÃO (+ Nova Missão)
        ========================================================================= -->
     <div class="modal-backdrop" id="creation-modal">
       <div class="modal-card">
         <div class="modal-header">
           <h2 class="modal-title">Novo Elemento no Mapa</h2>
-          <button class="btn-sidebar-toggle" id="btn-close-modal-x">✖</button>
+          <button class="btn-close-panel" id="btn-close-modal-x" type="button" aria-label="Fechar">
+            <span class="ds-icon ds-icon-14">
+              <img src="./assets/icons/close.svg" alt="" width="14" height="14" />
+            </span>
+          </button>
         </div>
 
         <div class="modal-tabs">
-          <button type="button" class="modal-tab active" data-tab="missao">🌱 Missão</button>
-          <button type="button" class="modal-tab" data-tab="mutirao">🤝 Mutirão</button>
-          <button type="button" class="modal-tab" data-tab="memoria">📷 Memória</button>
-          <button type="button" class="modal-tab" data-tab="marcador">📍 Marcador</button>
+          <button type="button" class="modal-tab active" data-tab="missao">
+            <span class="tab-icon"><img src="./assets/icons/sprout.svg" alt="" width="16" height="16" /></span>
+            Missão
+          </button>
+          <button type="button" class="modal-tab" data-tab="mutirao">
+            <span class="tab-icon"><img src="./assets/icons/users.svg" alt="" width="16" height="16" /></span>
+            Mutirão
+          </button>
+          <button type="button" class="modal-tab" data-tab="memoria">
+            <span class="tab-icon"><img src="./assets/icons/camera.svg" alt="" width="16" height="16" /></span>
+            Memória
+          </button>
+          <button type="button" class="modal-tab" data-tab="marcador">
+            <span class="tab-icon"><img src="./assets/icons/map-pin.svg" alt="" width="16" height="16" /></span>
+            Marcador
+          </button>
         </div>
 
         <form id="creation-form">
@@ -593,10 +585,10 @@
               <div class="form-group">
                 <label class="form-label" for="select-categoria-missao">Categoria</label>
                 <select id="select-categoria-missao" class="form-select">
-                  <option value="Meio Ambiente">🌱 Meio Ambiente & Reflorestamento</option>
-                  <option value="Proteção de Nascentes">💧 Proteção de Nascentes e Rios</option>
-                  <option value="Prevenção de Riscos">⚠️ Prevenção de Alagamentos e Riscos</option>
-                  <option value="Agricultura Urbana">🥦 Agricultura Urbana e Hortas</option>
+                  <option value="Meio Ambiente">Meio Ambiente & Reflorestamento</option>
+                  <option value="Proteção de Nascentes">Proteção de Nascentes e Rios</option>
+                  <option value="Prevenção de Riscos">Prevenção de Alagamentos e Riscos</option>
+                  <option value="Agricultura Urbana">Agricultura Urbana e Hortas</option>
                 </select>
               </div>
 
@@ -609,16 +601,16 @@
             <!-- 2. ABA MUTIRÃO -->
             <div class="tab-panel" id="tab-content-mutirao" style="display: none;">
               <p class="tab-description-text">
-                🤝 Vincule um mutirão já planejado a este ponto do território para mobilizar a comunidade local.
+                Vincule um mutirão já planejado a este ponto do território para mobilizar a comunidade local.
               </p>
 
               <div class="form-group">
                 <label class="form-label" for="select-mutirao-existente">Selecione o Mutirão Existente *</label>
                 <select id="select-mutirao-existente" class="form-select">
-                  <option value="Mutirão da Horta Comunitária">🤝 Mutirão da Horta Comunitária (Sábado, 09:00)</option>
-                  <option value="Mutirão Limpeza do Rio Sarapuí">🤝 Mutirão Limpeza do Rio Sarapuí (Domingo, 08:30)</option>
-                  <option value="Mutirão Plantio de Mudas">🤝 Mutirão Plantio de Mudas (15/09, 14:00)</option>
-                  <option value="Mutirão Pintura do Centro Comunitário">🤝 Mutirão Pintura do Centro Comunitário (22/09, 09:00)</option>
+                  <option value="Mutirão da Horta Comunitária">Mutirão da Horta Comunitária (Sábado, 09:00)</option>
+                  <option value="Mutirão Limpeza do Rio Sarapuí">Mutirão Limpeza do Rio Sarapuí (Domingo, 08:30)</option>
+                  <option value="Mutirão Plantio de Mudas">Mutirão Plantio de Mudas (15/09, 14:00)</option>
+                  <option value="Mutirão Pintura do Centro Comunitário">Mutirão Pintura do Centro Comunitário (22/09, 09:00)</option>
                 </select>
                 <span class="form-helper-text">O mutirão selecionado será fixado na localização do mapa.</span>
               </div>
@@ -627,7 +619,7 @@
             <!-- 3. ABA MEMÓRIA -->
             <div class="tab-panel" id="tab-content-memoria" style="display: none;">
               <p class="tab-description-text">
-                📷 Registre uma memória fotográfica da comunidade para preservar a história e transformações do território.
+                Registre uma memória fotográfica da comunidade para preservar a história e transformações do território.
               </p>
 
               <div class="form-group">
@@ -635,7 +627,11 @@
                 <div class="dropzone-box" id="dropzone-memoria">
                   <input type="file" id="input-foto-memoria" accept="image/*" class="file-input-hidden" />
                   <div class="dropzone-prompt" id="dropzone-prompt">
-                    <span class="dropzone-icon">📷</span>
+                    <span class="dropzone-icon">
+                      <span class="ds-icon" style="width: 32px; height: 32px">
+                        <img src="./assets/icons/camera.svg" alt="" width="32" height="32" />
+                      </span>
+                    </span>
                     <span class="dropzone-text">Clique ou arraste uma imagem aqui</span>
                     <span class="dropzone-subtext">Formatos aceitos: JPG, PNG, WebP</span>
                   </div>
@@ -665,9 +661,9 @@
                 <label class="form-label" for="select-vinculo-memoria">Vincular a uma Missão/Mutirão (Opcional)</label>
                 <select id="select-vinculo-memoria" class="form-select">
                   <option value="">Nenhum vínculo (Memória autônoma)</option>
-                  <option value="Recuperação da nascente Sarapuí">🌱 Recuperação da nascente Sarapuí</option>
-                  <option value="Horta Comunitária Urbana">🌱 Horta Comunitária Urbana</option>
-                  <option value="Mutirão Limpeza do Rio Sarapuí">🤝 Mutirão Limpeza do Rio Sarapuí</option>
+                  <option value="Recuperação da nascente Sarapuí">Recuperação da nascente Sarapuí</option>
+                  <option value="Horta Comunitária Urbana">Horta Comunitária Urbana</option>
+                  <option value="Mutirão Limpeza do Rio Sarapuí">Mutirão Limpeza do Rio Sarapuí</option>
                 </select>
               </div>
             </div>
@@ -675,7 +671,7 @@
             <!-- 4. ABA MARCADOR -->
             <div class="tab-panel" id="tab-content-marcador" style="display: none;">
               <p class="tab-description-text">
-                📍 Adicione um ponto no mapa para alertar a comunidade ou destacar um local de interesse territorial.
+                Adicione um ponto no mapa para alertar a comunidade ou destacar um local de interesse territorial.
               </p>
 
               <div class="form-group">
@@ -684,7 +680,11 @@
                   <label class="marcador-option active" id="option-tipo-alerta">
                     <input type="radio" name="tipo-marcador" value="alerta" checked class="radio-hidden" />
                     <div class="marcador-option-content">
-                      <span class="marcador-icon">🚨</span>
+                      <span class="marcador-icon">
+                        <span class="ds-icon" style="width: 22px; height: 22px">
+                          <img src="./assets/icons/map-pin.svg" alt="" width="22" height="22" />
+                        </span>
+                      </span>
                       <div>
                         <strong>Alerta Comunitário</strong>
                         <small>Descarte de lixo, risco, alagamento ou manutenção</small>
@@ -694,7 +694,11 @@
                   <label class="marcador-option" id="option-tipo-interesse">
                     <input type="radio" name="tipo-marcador" value="interesse" class="radio-hidden" />
                     <div class="marcador-option-content">
-                      <span class="marcador-icon">📍</span>
+                      <span class="marcador-icon">
+                        <span class="ds-icon" style="width: 22px; height: 22px">
+                          <img src="./assets/icons/map-pin.svg" alt="" width="22" height="22" />
+                        </span>
+                      </span>
                       <div>
                         <strong>Ponto de Interesse</strong>
                         <small>Nascente, equipamento comunitário, sede ou referência</small>
@@ -717,11 +721,11 @@
               <div class="form-group">
                 <label class="form-label" for="select-categoria-marcador">Categoria / Severidade</label>
                 <select id="select-categoria-marcador" class="form-select">
-                  <option value="Alagamento / Risco">⚠️ Alagamento / Água parada</option>
-                  <option value="Lixo / Entulho">🗑️ Descarte Irregular de Entulho</option>
-                  <option value="Esgoto / Saneamento">💧 Saneamento / Vazamento</option>
-                  <option value="Equipamento Social">🏠 Equipamento Comunitário</option>
-                  <option value="Nascente / Natureza">🌿 Nascente / Ponto Verde</option>
+                  <option value="Alagamento / Risco">Alagamento / Água parada</option>
+                  <option value="Lixo / Entulho">Descarte Irregular de Entulho</option>
+                  <option value="Esgoto / Saneamento">Saneamento / Vazamento</option>
+                  <option value="Equipamento Social">Equipamento Comunitário</option>
+                  <option value="Nascente / Natureza">Nascente / Ponto Verde</option>
                 </select>
               </div>
 
