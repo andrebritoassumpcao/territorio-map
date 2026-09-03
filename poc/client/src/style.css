@@ -94,7 +94,8 @@ body {
 .ds-icon.invert img,
 .tool-btn.active .ds-icon img,
 .tool-btn.btn-primary-action .ds-icon img,
-.draw-btn.active .ds-icon img {
+.draw-btn.active .ds-icon img,
+.tool-split.active .ds-icon img {
   filter: brightness(0) invert(1);
 }
 
@@ -445,6 +446,27 @@ body {
   z-index: 1;
 }
 
+.leaflet-container.drawing-cursor,
+.leaflet-container.place-cursor {
+  cursor: crosshair;
+}
+
+.leaflet-container.drawing-cursor .leaflet-interactive,
+.leaflet-container.place-cursor .leaflet-interactive {
+  cursor: crosshair;
+}
+
+.leaflet-container.pan-cursor,
+.leaflet-container.pan-cursor .leaflet-interactive {
+  cursor: grab;
+}
+
+.leaflet-container.pan-cursor.leaflet-dragging,
+.leaflet-container.leaflet-dragging.pan-cursor,
+.leaflet-container.pan-cursor.leaflet-dragging .leaflet-interactive {
+  cursor: grabbing;
+}
+
 /* Floating Toolbar — Figma 2071:212 */
 .floating-toolbar,
 .drawing-subbar {
@@ -454,17 +476,24 @@ body {
   background: var(--color-bg-surface);
   border: var(--border-hairline) solid var(--color-border-subtle);
   border-radius: var(--radius-md);
-  padding: var(--space-3) 24px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   box-shadow: var(--elevation-2);
   z-index: 1000;
+}
+
+.drawing-subbar {
   overflow: clip;
 }
 
 .floating-toolbar {
   top: 16px;
+  flex-wrap: nowrap;
+  max-width: calc(100% - 32px);
+  overflow: visible;
+  z-index: 1100;
 }
 
 .tool-btn,
@@ -472,14 +501,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  height: 40px;
-  padding: 0 var(--space-4);
+  gap: 6px;
+  height: 36px;
+  padding: 0 10px;
   border: none;
   background: transparent;
   border-radius: var(--radius-sm);
   font-family: Inter, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 20px;
   color: var(--color-text-primary);
@@ -515,10 +544,130 @@ body {
   margin: 0 2px;
 }
 
+.tool-group {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tool-split {
+  display: flex;
+  align-items: stretch;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.tool-split-main,
+.tool-split-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  padding: 0;
+}
+
+.tool-split-main {
+  width: 36px;
+}
+
+.tool-split-chevron {
+  width: 18px;
+  padding-right: 4px;
+}
+
+.tool-split:hover {
+  background-color: var(--color-bg-canvas);
+}
+
+.tool-split.active {
+  background-color: var(--color-action-accent-bg);
+  color: var(--color-text-inverse);
+}
+
+.tool-split.active .tool-split-chevron {
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.tool-flyout {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  padding: 6px;
+  background: var(--color-bg-surface);
+  border: var(--border-hairline) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 1100;
+}
+
+.tool-flyout-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 36px;
+  padding: 0 10px 0 8px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.tool-flyout-item:hover {
+  background: var(--color-bg-canvas);
+}
+
+.tool-flyout-item.selected {
+  background: var(--color-feedback-success-bg);
+  color: var(--color-feedback-success-fg);
+}
+
+.tool-flyout-check {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.tool-flyout-item.selected .tool-flyout-check {
+  opacity: 1;
+}
+
+.tool-flyout-item.selected .tool-flyout-check img {
+  filter: brightness(0);
+}
+
+.tool-flyout-label {
+  flex: 1;
+}
+
+.tool-flyout-item kbd {
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+}
+
 /* Drawing Sub-Toolbar — Figma 2082:375 */
 .drawing-subbar {
   top: 80px;
   animation: slideDown 0.2s ease-out;
+  flex-wrap: wrap;
+  max-width: calc(100% - 32px);
 }
 
 .drawing-mode-label {
@@ -528,6 +677,169 @@ body {
   line-height: 20px;
   color: var(--color-text-primary);
   white-space: nowrap;
+}
+
+.draw-color-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.draw-color-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.color-swatches {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px var(--color-border-default);
+  padding: 0;
+  cursor: pointer;
+}
+
+.color-swatch.active {
+  box-shadow: 0 0 0 2px var(--color-action-accent-bg);
+}
+
+input[type="color"] {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+.shape-actions {
+  position: absolute;
+  z-index: 1100;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elevation-2);
+  transform: translate(-100%, -100%);
+  margin-top: -8px;
+  pointer-events: auto;
+}
+
+.shape-action-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.shape-action-btn:hover {
+  background: var(--color-bg-canvas);
+}
+
+.shape-action-danger:hover {
+  background: #fdecea;
+}
+
+.shape-edit-panel {
+  position: absolute;
+  z-index: 1100;
+  top: 80px;
+  left: 20px;
+  width: 280px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--elevation-2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shape-edit-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.shape-edit-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.shape-edit-footer .card-btn {
+  width: auto;
+  padding: 10px 16px;
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--elevation-2);
+}
+
+.confirm-card p {
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--color-text-primary);
+  margin-bottom: 16px;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.card-btn-danger {
+  background: var(--color-feedback-error-solid);
+  color: white;
+  width: auto;
+  padding: 10px 16px;
+}
+
+.card-btn-danger:hover {
+  background: #8f1c16;
 }
 
 @keyframes slideDown {

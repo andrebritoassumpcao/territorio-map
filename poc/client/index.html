@@ -181,6 +181,59 @@
         <div class="map-container">
           <!-- Toolbar Flutuante Superior (Estilo Felt) -->
           <div class="floating-toolbar">
+            <div class="tool-group" id="pointer-tool-group">
+              <div class="tool-split active" id="tool-pointer-split">
+                <button
+                  type="button"
+                  class="tool-split-main"
+                  id="tool-pointer"
+                  aria-label="Selecionar"
+                  title="Selecionar"
+                >
+                  <span class="ds-icon ds-icon-16">
+                    <img id="tool-pointer-icon" src="./assets/icons/mouse-pointer.svg" alt="" width="16" height="16" />
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="tool-split-chevron"
+                  id="tool-pointer-menu-btn"
+                  aria-expanded="false"
+                  aria-haspopup="menu"
+                  aria-controls="pointer-tool-flyout"
+                  aria-label="Mais ferramentas"
+                >
+                  <span class="ds-icon" style="width: 10px; height: 6px">
+                    <img src="./assets/icons/chevron-down.svg" alt="" width="10" height="6" />
+                  </span>
+                </button>
+              </div>
+              <div class="tool-flyout hidden" id="pointer-tool-flyout" role="menu">
+                <button type="button" class="tool-flyout-item selected" role="menuitem" data-tool="select" id="tool-select">
+                  <span class="tool-flyout-check" aria-hidden="true">
+                    <img src="./assets/icons/check.svg" alt="" width="12" height="12" />
+                  </span>
+                  <span class="ds-icon ds-icon-16">
+                    <img src="./assets/icons/mouse-pointer.svg" alt="" width="16" height="16" />
+                  </span>
+                  <span class="tool-flyout-label">Selecionar</span>
+                  <kbd>V</kbd>
+                </button>
+                <button type="button" class="tool-flyout-item" role="menuitem" data-tool="pan" id="tool-pan">
+                  <span class="tool-flyout-check" aria-hidden="true">
+                    <img src="./assets/icons/check.svg" alt="" width="12" height="12" />
+                  </span>
+                  <span class="ds-icon ds-icon-16">
+                    <img src="./assets/icons/hand.svg" alt="" width="16" height="16" />
+                  </span>
+                  <span class="tool-flyout-label">Mover</span>
+                  <kbd>H</kbd>
+                </button>
+              </div>
+            </div>
+
+            <span class="tool-divider" aria-hidden="true"></span>
+
             <button class="tool-btn btn-primary-action" id="btn-nova-missao">
               <span class="ds-icon ds-icon-16">
                 <img src="./assets/icons/plus.svg" alt="" width="16" height="16" />
@@ -233,6 +286,96 @@
               </span>
               <span>Polígono</span>
             </button>
+            <span class="tool-divider" aria-hidden="true"></span>
+            <div class="draw-color-group">
+              <span class="draw-color-label" id="draw-color-label">Cor</span>
+              <div class="color-swatches" id="draw-color-swatches" role="listbox" aria-label="Cor da área">
+                <button type="button" class="color-swatch active" data-color="#1f7a4c" style="background:#1f7a4c" aria-label="Verde"></button>
+                <button type="button" class="color-swatch" data-color="#d4832a" style="background:#d4832a" aria-label="Âmbar"></button>
+                <button type="button" class="color-swatch" data-color="#b3241b" style="background:#b3241b" aria-label="Vermelho"></button>
+                <button type="button" class="color-swatch" data-color="#00bcd4" style="background:#00bcd4" aria-label="Ciano"></button>
+                <button type="button" class="color-swatch" data-color="#7c4dff" style="background:#7c4dff" aria-label="Roxo"></button>
+              </div>
+              <input type="color" id="draw-color-picker" value="#1f7a4c" aria-label="Cor da área" />
+            </div>
+          </div>
+
+          <!-- Sub-Toolbar de Marcador (Aparece ao clicar em Novo Marcador) -->
+          <div class="drawing-subbar hidden" id="marker-subbar">
+            <span class="drawing-mode-label">Tipo:</span>
+            <button type="button" class="draw-btn" data-place="missao">
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/sprout.svg" alt="" width="16" height="16" />
+              </span>
+              <span>Missão</span>
+            </button>
+            <button type="button" class="draw-btn" data-place="mutirao">
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/users.svg" alt="" width="16" height="16" />
+              </span>
+              <span>Mutirão</span>
+            </button>
+            <button type="button" class="draw-btn" data-place="memoria">
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/camera.svg" alt="" width="16" height="16" />
+              </span>
+              <span>Memória</span>
+            </button>
+            <button type="button" class="draw-btn" data-place="marcador">
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/map-pin.svg" alt="" width="16" height="16" />
+              </span>
+              <span>Marcador</span>
+            </button>
+          </div>
+
+          <!-- Ações da forma selecionada (canto superior direito do quadrado) -->
+          <div class="shape-actions hidden" id="shape-actions">
+            <button type="button" class="shape-action-btn" id="btn-shape-edit" aria-label="Editar">
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/pencil.svg" alt="" width="16" height="16" />
+              </span>
+            </button>
+            <button type="button" class="shape-action-btn shape-action-danger" id="btn-shape-delete" aria-label="Excluir">
+              <span class="ds-icon ds-icon-16">
+                <img src="./assets/icons/trash-2.svg" alt="" width="16" height="16" />
+              </span>
+            </button>
+          </div>
+
+          <!-- Painel compacto de edição da forma -->
+          <div class="shape-edit-panel hidden" id="shape-edit-panel" role="dialog" aria-labelledby="shape-edit-title">
+            <h3 class="shape-edit-title" id="shape-edit-title">Editar forma</h3>
+            <div class="form-group">
+              <label class="form-label" for="input-shape-name">Nome</label>
+              <input type="text" id="input-shape-name" class="form-input" maxlength="80" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-shape-stroke">Cor da linha</label>
+              <div class="color-swatches" id="edit-stroke-swatches">
+                <button type="button" class="color-swatch" data-color="#1f7a4c" style="background:#1f7a4c" aria-label="Verde"></button>
+                <button type="button" class="color-swatch" data-color="#d4832a" style="background:#d4832a" aria-label="Âmbar"></button>
+                <button type="button" class="color-swatch" data-color="#b3241b" style="background:#b3241b" aria-label="Vermelho"></button>
+                <button type="button" class="color-swatch" data-color="#00bcd4" style="background:#00bcd4" aria-label="Ciano"></button>
+                <button type="button" class="color-swatch" data-color="#7c4dff" style="background:#7c4dff" aria-label="Roxo"></button>
+              </div>
+              <input type="color" id="input-shape-stroke" value="#1f7a4c" aria-label="Cor da linha" />
+            </div>
+            <div class="form-group" id="shape-fill-group">
+              <label class="form-label" for="input-shape-fill">Cor da área</label>
+              <div class="color-swatches" id="edit-fill-swatches">
+                <button type="button" class="color-swatch" data-color="#1f7a4c" style="background:#1f7a4c" aria-label="Verde"></button>
+                <button type="button" class="color-swatch" data-color="#d4832a" style="background:#d4832a" aria-label="Âmbar"></button>
+                <button type="button" class="color-swatch" data-color="#b3241b" style="background:#b3241b" aria-label="Vermelho"></button>
+                <button type="button" class="color-swatch" data-color="#00bcd4" style="background:#00bcd4" aria-label="Ciano"></button>
+                <button type="button" class="color-swatch" data-color="#7c4dff" style="background:#7c4dff" aria-label="Roxo"></button>
+              </div>
+              <input type="color" id="input-shape-fill" value="#1f7a4c" aria-label="Cor da área" />
+            </div>
+            <div class="shape-edit-footer">
+              <button type="button" class="btn-secondary" id="btn-shape-edit-cancel">Cancelar</button>
+              <button type="button" class="card-btn card-btn-primary" id="btn-shape-edit-save">Salvar</button>
+            </div>
           </div>
 
           <!-- Painel Flutuante de Camadas -->
@@ -524,13 +667,24 @@
       </div>
     </div>
 
+    <!-- Confirmação de exclusão de forma -->
+    <div class="confirm-backdrop hidden" id="confirm-delete" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-message">
+      <div class="confirm-card">
+        <p id="confirm-delete-message">Excluir esta área? Isso não pode ser desfeito.</p>
+        <div class="confirm-actions">
+          <button type="button" class="btn-secondary" id="btn-confirm-cancel">Cancelar</button>
+          <button type="button" class="card-btn card-btn-danger" id="btn-confirm-delete">Excluir</button>
+        </div>
+      </div>
+    </div>
+
     <!-- =========================================================================
        4. MODAL DE CRIAÇÃO (+ Nova Missão)
        ========================================================================= -->
     <div class="modal-backdrop" id="creation-modal">
       <div class="modal-card">
         <div class="modal-header">
-          <h2 class="modal-title">Novo Elemento no Mapa</h2>
+          <h2 class="modal-title" id="creation-modal-title">Novo Elemento no Mapa</h2>
           <button class="btn-close-panel" id="btn-close-modal-x" type="button" aria-label="Fechar">
             <span class="ds-icon ds-icon-14">
               <img src="./assets/icons/close.svg" alt="" width="14" height="14" />
@@ -538,7 +692,7 @@
           </button>
         </div>
 
-        <div class="modal-tabs">
+        <div class="modal-tabs" id="creation-modal-tabs">
           <button type="button" class="modal-tab active" data-tab="missao">
             <span class="tab-icon"><img src="./assets/icons/sprout.svg" alt="" width="16" height="16" /></span>
             Missão

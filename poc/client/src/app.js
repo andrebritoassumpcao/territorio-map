@@ -40,6 +40,79 @@ document.addEventListener('DOMContentLoaded', () => {
     areas: L.layerGroup().addTo(map)
   };
 
+  let mapTool = 'select';
+  let isDrawing = false;
+  let skipNextMapClick = false;
+  const desenhos = [];
+  const draftGroup = L.layerGroup().addTo(map);
+  const selectionGroup = L.layerGroup().addTo(map);
+  const drawState = {
+    tool: 'poligono',
+    vertices: [],
+    draft: null,
+    draftCasing: null,
+    seqLinha: 0,
+    seqArea: 0,
+    color: '#1f7a4c'
+  };
+  const placeState = {
+    type: null,
+    latlng: null
+  };
+  const selection = {
+    record: null,
+    bbox: null
+  };
+
+  function casingStyle(isPoly) {
+    return {
+      color: '#ffffff',
+      weight: isPoly ? 7 : 8,
+      opacity: 0.95,
+      fill: false,
+      fillOpacity: 0,
+      interactive: true,
+      bubblingMouseEvents: true,
+      lineJoin: 'round',
+      lineCap: 'round'
+    };
+  }
+
+  function lineStyle(color) {
+    return {
+      color,
+      weight: 5,
+      lineJoin: 'round',
+      lineCap: 'round',
+      interactive: true,
+      bubblingMouseEvents: true
+    };
+  }
+
+  function polyStyle(color, fillColor) {
+    return {
+      color,
+      weight: 4,
+      fillColor: fillColor || color,
+      fillOpacity: 0.28,
+      lineJoin: 'round',
+      interactive: true,
+      bubblingMouseEvents: true
+    };
+  }
+
+  function draftCasingStyle() {
+    return { ...casingStyle(drawState.tool !== 'linha'), interactive: false };
+  }
+
+  function draftLineStyle() {
+    return { ...lineStyle(drawState.color), interactive: false };
+  }
+
+  function draftPolyStyle() {
+    return { ...polyStyle(drawState.color), interactive: false };
+  }
+
   const ICON = {
     sprout: './assets/icons/sprout.svg',
     users: './assets/icons/users.svg',
@@ -60,6 +133,56 @@ document.addEventListener('DOMContentLoaded', () => {
       alerta: ICON.pin
     }[type] || ICON.pin;
     return `<div class="marker-badge ${type}">${iconImg(src, 18)}</div>`;
+  }
+
+  function bindShapeClicks(record) {
+    const onShapeClick = (e) => {
+      L.DomEvent.stop(e);
+      skipNextMapClick = true;
+      setTimeout(() => { skipNextMapClick = false; }, 0);
+      if (mapTool !== 'select') return;
+      selectShape(record);
+    };
+    record.layer.on('click', onShapeClick);
+    record.casing.on('click', onShapeClick);
+  }
+
+  function addShapeToMap({ tipo, titulo, latlngs, color, fillColor }) {
+    const isLine = tipo === 'linha';
+    const stroke = color || '#1f7a4c';
+    const fill = fillColor || stroke;
+    const casing = isLine
+      ? L.polyline(latlngs, casingStyle(false))
+      : L.polygon(latlngs, casingStyle(true));
+    const layer = isLine
+      ? L.polyline(latlngs, lineStyle(stroke))
+      : L.polygon(latlngs, polyStyle(stroke, fill));
+
+    casing.addTo(layerGroups.areas);
+    layer.addTo(layerGroups.areas);
+    layer.bindTooltip(titulo, { permanent: false });
+
+    const record = {
+      id: `d${desenhos.length + 1}`,
+      tipo,
+      titulo,
+      latlngs,
+      color: stroke,
+      fillColor: fill,
+      layer,
+      casing
+    };
+    desenhos.push(record);
+    bindShapeClicks(record);
+    return record;
+  }
+
+  function syncSwatchActive(containerId, color) {
+    const root = document.getElementById(containerId);
+    if (!root) return;
+    root.querySelectorAll('.color-swatch').forEach(btn => {
+      btn.classList.toggle('active', (btn.dataset.color || '').toLowerCase() === color.toLowerCase());
+    });
   }
 
   // 3. DADOS MOCKADOS DOS WAYPOINTS
@@ -429,7 +552,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     L.marker([item.lat, item.lng], { icon })
-      .on('click', () => openMemoryModal(item))
+      .on('click', () => {
+        if (mapTool !== 'select') return;
+        openMemoryModal(item);
+      })
       .addTo(layerGroups.memorias);
   });
 
@@ -453,34 +579,31 @@ document.addEventListener('DOMContentLoaded', () => {
       .addTo(layerGroups.marcadores);
   });
 
-  // (E) ÁREAS DE INTERVENÇÃO (POLÍGONOS SVG MOCKADOS)
-  const area1Coords = [
-    [-22.782, -43.343],
-    [-22.784, -43.338],
-    [-22.787, -43.341],
-    [-22.785, -43.345]
-  ];
-  L.polygon(area1Coords, {
-    color: '#10b981',
-    weight: 2,
-    dashArray: '6, 6',
-    fillColor: '#10b981',
-    fillOpacity: 0.2
-  }).bindTooltip('Área de Preservação Rio Sarapuí', { permanent: false }).addTo(layerGroups.areas);
-
-  const area2Coords = [
-    [-22.786, -43.349],
-    [-22.789, -43.343],
-    [-22.792, -43.346],
-    [-22.790, -43.351]
-  ];
-  L.polygon(area2Coords, {
-    color: '#f59e0b',
-    weight: 2,
-    dashArray: '4, 4',
-    fillColor: '#f59e0b',
-    fillOpacity: 0.25
-  }).bindTooltip('Zoneamento de Risco de Enchente', { permanent: false }).addTo(layerGroups.areas);
+  // (E) ÁREAS DE INTERVENÇÃO
+  addShapeToMap({
+    tipo: 'poligono',
+    titulo: 'Área de Preservação Rio Sarapuí',
+    latlngs: [
+      [-22.782, -43.343],
+      [-22.784, -43.338],
+      [-22.787, -43.341],
+      [-22.785, -43.345]
+    ],
+    color: '#1f7a4c',
+    fillColor: '#1f7a4c'
+  });
+  addShapeToMap({
+    tipo: 'poligono',
+    titulo: 'Zoneamento de Risco de Enchente',
+    latlngs: [
+      [-22.786, -43.349],
+      [-22.789, -43.343],
+      [-22.792, -43.346],
+      [-22.790, -43.351]
+    ],
+    color: '#d4832a',
+    fillColor: '#d4832a'
+  });
 
   // 5. INTERAÇÕES E CONTROLES DE INTERFACE
 
@@ -502,7 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   toolButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
-      closeDrawingMode();
+      setMapTool('select');
       const targetPanelId = btn.getAttribute('data-panel');
       const targetPanel = document.getElementById(targetPanelId);
 
@@ -574,37 +697,571 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Modo Desenho (Drawing Tool Sub-bar)
+  // Ferramentas de mapa: selecionar, mover, desenhar, posicionar
+  const btnSelect = document.getElementById('tool-select');
+  const btnPan = document.getElementById('tool-pan');
+  const btnPointer = document.getElementById('tool-pointer');
+  const btnPointerMenu = document.getElementById('tool-pointer-menu-btn');
+  const pointerSplit = document.getElementById('tool-pointer-split');
+  const pointerFlyout = document.getElementById('pointer-tool-flyout');
+  const pointerIcon = document.getElementById('tool-pointer-icon');
+  let lastPointerTool = 'select';
   const btnDesenhar = document.getElementById('tool-desenhar');
   const drawingSubbar = document.getElementById('drawing-subbar');
+  const markerSubbar = document.getElementById('marker-subbar');
+  const btnNovaMissao = document.getElementById('btn-nova-missao');
+  const shapeActionsEl = document.getElementById('shape-actions');
+  const shapeEditPanel = document.getElementById('shape-edit-panel');
+  const confirmDeleteEl = document.getElementById('confirm-delete');
+  const drawColorPicker = document.getElementById('draw-color-picker');
+  const drawColorLabel = document.getElementById('draw-color-label');
+  if (shapeActionsEl) L.DomEvent.disableClickPropagation(shapeActionsEl);
+  if (shapeEditPanel) L.DomEvent.disableClickPropagation(shapeEditPanel);
+  const PLACE_TOAST = {
+    missao: 'Clique no mapa para posicionar a missão.',
+    mutirao: 'Clique no mapa para posicionar o mutirão.',
+    memoria: 'Clique no mapa para posicionar a memória.',
+    marcador: 'Clique no mapa para posicionar o marcador.'
+  };
+
+  function setFeatureClicksEnabled(on) {
+    const groups = [
+      layerGroups.missoes,
+      layerGroups.mutiroes,
+      layerGroups.memorias,
+      layerGroups.marcadores,
+      layerGroups.areas
+    ];
+    groups.forEach(group => {
+      group.eachLayer(layer => {
+        if (layer._icon) layer._icon.style.pointerEvents = on ? '' : 'none';
+        if (layer._path) layer._path.style.pointerEvents = on ? '' : 'none';
+      });
+    });
+  }
+
+  function discardDraft() {
+    drawState.vertices = [];
+    drawState.draft = null;
+    drawState.draftCasing = null;
+    draftGroup.clearLayers();
+  }
+
+  function redrawDraft(mouseLatLng) {
+    if (drawState.draft) {
+      draftGroup.removeLayer(drawState.draft);
+      drawState.draft = null;
+    }
+    if (drawState.draftCasing) {
+      draftGroup.removeLayer(drawState.draftCasing);
+      drawState.draftCasing = null;
+    }
+    const pts = drawState.vertices.slice();
+    if (mouseLatLng && pts.length) pts.push(mouseLatLng);
+    if (pts.length < 2) return;
+    const isLine = drawState.tool === 'linha';
+    drawState.draftCasing = isLine
+      ? L.polyline(pts, draftCasingStyle())
+      : L.polygon(pts, draftCasingStyle());
+    drawState.draft = isLine
+      ? L.polyline(pts, draftLineStyle())
+      : L.polygon(pts, draftPolyStyle());
+    drawState.draftCasing.addTo(draftGroup);
+    drawState.draft.addTo(draftGroup);
+  }
+
+  function addVertex(latlng) {
+    drawState.vertices.push(latlng);
+    L.circleMarker(latlng, {
+      radius: 5,
+      color: drawState.color,
+      fillColor: '#ffffff',
+      fillOpacity: 1,
+      weight: 2,
+      interactive: false
+    }).addTo(draftGroup);
+    redrawDraft(null);
+  }
+
+  function commitDrawing() {
+    const minPoints = drawState.tool === 'linha' ? 2 : 3;
+    if (drawState.vertices.length < minPoints) {
+      showToast(
+        drawState.tool === 'linha'
+          ? 'Clique pelo menos dois pontos para criar a linha.'
+          : 'Clique pelo menos três pontos para criar a área.'
+      );
+      return;
+    }
+
+    const verts = drawState.vertices.slice();
+    const latlngs = verts.map(ll => [ll.lat, ll.lng]);
+    if (drawState.tool === 'linha') {
+      drawState.seqLinha += 1;
+    } else {
+      drawState.seqArea += 1;
+    }
+    const titulo = drawState.tool === 'linha'
+      ? `Linha ${drawState.seqLinha}`
+      : `Área ${drawState.seqArea}`;
+    addShapeToMap({
+      tipo: drawState.tool,
+      titulo,
+      latlngs,
+      color: drawState.color,
+      fillColor: drawState.color
+    });
+    discardDraft();
+    if (mapTool === 'draw') setFeatureClicksEnabled(false);
+    showToast(`"${titulo}" adicionada ao mapa.`);
+  }
+
+  function updateDrawColorLabel() {
+    const label = drawState.tool === 'linha' ? 'Cor da linha' : 'Cor da área';
+    if (drawColorLabel) drawColorLabel.textContent = 'Cor';
+    if (drawColorPicker) drawColorPicker.setAttribute('aria-label', label);
+    const swatches = document.getElementById('draw-color-swatches');
+    if (swatches) swatches.setAttribute('aria-label', label);
+  }
+
+  function setDrawColor(color) {
+    drawState.color = color;
+    if (drawColorPicker) drawColorPicker.value = color;
+    syncSwatchActive('draw-color-swatches', color);
+    if (drawState.vertices.length >= 2) redrawDraft(null);
+  }
 
   function closeDrawingMode() {
+    isDrawing = false;
+    map.getContainer().classList.remove('drawing-cursor');
+    map.doubleClickZoom.enable();
+    discardDraft();
     if (drawingSubbar) drawingSubbar.classList.add('hidden');
     if (btnDesenhar) btnDesenhar.classList.remove('active');
   }
+
+  function closePlacementMode() {
+    placeState.type = null;
+    placeState.latlng = null;
+    map.getContainer().classList.remove('place-cursor');
+    if (markerSubbar) {
+      markerSubbar.classList.add('hidden');
+      markerSubbar.querySelectorAll('.draw-btn').forEach(b => b.classList.remove('active'));
+    }
+    if (btnNovaMissao) btnNovaMissao.classList.remove('active');
+  }
+
+  function clearSelection() {
+    selectionGroup.clearLayers();
+    selection.record = null;
+    selection.bbox = null;
+    if (shapeActionsEl) shapeActionsEl.classList.add('hidden');
+    if (shapeEditPanel) shapeEditPanel.classList.add('hidden');
+  }
+
+  function updateShapeActionsPosition() {
+    if (!selection.bbox || !shapeActionsEl) return;
+    const ne = selection.bbox.getBounds().getNorthEast();
+    const point = map.latLngToContainerPoint(ne);
+    shapeActionsEl.style.left = `${point.x}px`;
+    shapeActionsEl.style.top = `${point.y}px`;
+    shapeActionsEl.classList.remove('hidden');
+  }
+
+  function selectShape(record) {
+    if (shapeEditPanel) shapeEditPanel.classList.add('hidden');
+    selection.record = record;
+    selectionGroup.clearLayers();
+    selection.bbox = L.rectangle(record.layer.getBounds(), {
+      color: '#0b0f0a',
+      weight: 2,
+      dashArray: '6, 4',
+      fill: false,
+      interactive: false
+    }).addTo(selectionGroup);
+    updateShapeActionsPosition();
+  }
+
+  function closePointerFlyout() {
+    if (!pointerFlyout || !btnPointerMenu) return;
+    pointerFlyout.classList.add('hidden');
+    btnPointerMenu.setAttribute('aria-expanded', 'false');
+  }
+
+  function openPointerFlyout() {
+    if (!pointerFlyout || !btnPointerMenu) return;
+    pointerFlyout.classList.remove('hidden');
+    btnPointerMenu.setAttribute('aria-expanded', 'true');
+  }
+
+  function updatePointerGroupUI(tool) {
+    const isPointer = tool === 'select' || tool === 'pan';
+    if (isPointer) lastPointerTool = tool;
+
+    if (pointerSplit) pointerSplit.classList.toggle('active', isPointer);
+    if (btnPointer) {
+      const label = lastPointerTool === 'pan' ? 'Mover' : 'Selecionar';
+      btnPointer.setAttribute('aria-label', label);
+      btnPointer.title = label;
+    }
+    if (pointerIcon) {
+      pointerIcon.src = lastPointerTool === 'pan'
+        ? './assets/icons/hand.svg'
+        : './assets/icons/mouse-pointer.svg';
+    }
+    if (btnSelect) btnSelect.classList.toggle('selected', lastPointerTool === 'select');
+    if (btnPan) btnPan.classList.toggle('selected', lastPointerTool === 'pan');
+  }
+
+  function setMapTool(tool) {
+    if (tool !== 'draw') closeDrawingMode();
+    if (tool !== 'place') closePlacementMode();
+    if (tool !== 'select') clearSelection();
+    else if (shapeEditPanel) shapeEditPanel.classList.add('hidden');
+
+    mapTool = tool;
+    isDrawing = tool === 'draw';
+    updatePointerGroupUI(tool);
+    closePointerFlyout();
+
+    const container = map.getContainer();
+    container.classList.toggle('drawing-cursor', tool === 'draw');
+    container.classList.toggle('pan-cursor', tool === 'pan');
+    container.classList.toggle('place-cursor', tool === 'place' && !!placeState.type);
+
+    if (tool === 'draw' || tool === 'place') {
+      map.doubleClickZoom.disable();
+      setFeatureClicksEnabled(false);
+    } else if (tool === 'pan') {
+      map.doubleClickZoom.enable();
+      setFeatureClicksEnabled(false);
+    } else {
+      map.doubleClickZoom.enable();
+      setFeatureClicksEnabled(true);
+    }
+  }
+
+  function uiClickIgnored(target) {
+    return !!(target && target.closest(
+      '.leaflet-control, .floating-toolbar, .drawing-subbar, .floating-panel, .shape-actions, .shape-edit-panel, .confirm-backdrop, .modal-backdrop'
+    ));
+  }
+
+  function onMapClick(e) {
+    if (skipNextMapClick) {
+      skipNextMapClick = false;
+      return;
+    }
+    const target = e.originalEvent?.target;
+    if (uiClickIgnored(target)) return;
+
+    if (mapTool === 'draw') {
+      addVertex(e.latlng);
+      return;
+    }
+    if (mapTool === 'place' && !placeState.type) {
+      showToast('Escolha um tipo para posicionar no mapa.');
+      return;
+    }
+    if (mapTool === 'place' && placeState.type && !creationModal?.classList.contains('open')) {
+      placeState.latlng = e.latlng;
+      openCreationModalForPlacement();
+      return;
+    }
+    if (mapTool === 'select') {
+      clearSelection();
+    }
+  }
+
+  function onDrawMapDblClick(e) {
+    if (mapTool !== 'draw') return;
+    L.DomEvent.stop(e);
+    if (drawState.vertices.length > 0) {
+      drawState.vertices.pop();
+      const layers = draftGroup.getLayers();
+      const lastMarker = [...layers].reverse().find(l => l instanceof L.CircleMarker);
+      if (lastMarker) draftGroup.removeLayer(lastMarker);
+    }
+    commitDrawing();
+  }
+
+  function onDrawMapMouseMove(e) {
+    if (mapTool !== 'draw' || drawState.vertices.length === 0) return;
+    redrawDraft(e.latlng);
+  }
+
+  function onMapKeyDown(e) {
+    if (e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+
+    if (e.key === 'Escape') {
+      if (pointerFlyout && !pointerFlyout.classList.contains('hidden')) {
+        closePointerFlyout();
+        return;
+      }
+      if (confirmDeleteEl && !confirmDeleteEl.classList.contains('hidden')) {
+        confirmDeleteEl.classList.add('hidden');
+        return;
+      }
+      if (creationModal && creationModal.classList.contains('open')) {
+        closeModal();
+        return;
+      }
+      if (shapeEditPanel && !shapeEditPanel.classList.contains('hidden')) {
+        shapeEditPanel.classList.add('hidden');
+        return;
+      }
+      if (mapTool === 'draw' && drawState.vertices.length > 0) {
+        discardDraft();
+        showToast('Rascunho cancelado.');
+        return;
+      }
+      if (mapTool === 'draw') {
+        setMapTool('select');
+        return;
+      }
+      if (selection.record) {
+        clearSelection();
+        return;
+      }
+      if (mapTool === 'place') {
+        setMapTool('select');
+        showToast('Posicionamento cancelado.');
+        return;
+      }
+    }
+    if (e.key === 'Enter' && mapTool === 'draw') {
+      e.preventDefault();
+      commitDrawing();
+    }
+    const key = e.key.toLowerCase();
+    if ((key === 'v' || key === 'h') && (creationModal?.classList.contains('open') || (confirmDeleteEl && !confirmDeleteEl.classList.contains('hidden')))) {
+      return;
+    }
+    if (key === 'v') {
+      e.preventDefault();
+      floatingPanels.forEach(panel => panel.classList.add('hidden'));
+      toolButtons.forEach(b => b.classList.remove('active'));
+      setMapTool('select');
+    }
+    if (key === 'h') {
+      e.preventDefault();
+      floatingPanels.forEach(panel => panel.classList.add('hidden'));
+      toolButtons.forEach(b => b.classList.remove('active'));
+      setMapTool('pan');
+    }
+  }
+
+  map.on('click', onMapClick);
+  map.on('dblclick', onDrawMapDblClick);
+  map.on('mousemove', onDrawMapMouseMove);
+  map.on('zoom move moveend', updateShapeActionsPosition);
+  document.addEventListener('keydown', onMapKeyDown);
+
+  if (btnPointer) {
+    btnPointer.addEventListener('click', () => {
+      floatingPanels.forEach(panel => panel.classList.add('hidden'));
+      toolButtons.forEach(b => b.classList.remove('active'));
+      setMapTool(lastPointerTool);
+    });
+  }
+
+  if (btnPointerMenu) {
+    btnPointerMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = pointerFlyout && !pointerFlyout.classList.contains('hidden');
+      if (isOpen) {
+        closePointerFlyout();
+      } else {
+        floatingPanels.forEach(panel => panel.classList.add('hidden'));
+        openPointerFlyout();
+      }
+    });
+  }
+
+  [btnSelect, btnPan].forEach(btn => {
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      floatingPanels.forEach(panel => panel.classList.add('hidden'));
+      toolButtons.forEach(b => b.classList.remove('active'));
+      setMapTool(btn.getAttribute('data-tool'));
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    const group = document.getElementById('pointer-tool-group');
+    if (group && !group.contains(e.target)) closePointerFlyout();
+  });
 
   if (btnDesenhar && drawingSubbar) {
     btnDesenhar.addEventListener('click', () => {
       floatingPanels.forEach(panel => panel.classList.add('hidden'));
       toolButtons.forEach(b => b.classList.remove('active'));
       const willOpen = drawingSubbar.classList.contains('hidden');
-      drawingSubbar.classList.toggle('hidden', !willOpen);
-      btnDesenhar.classList.toggle('active', willOpen);
       if (willOpen) {
-        showToast('Modo de desenho ativado. Escolha uma ferramenta abaixo.');
+        setMapTool('draw');
+        drawingSubbar.classList.remove('hidden');
+        btnDesenhar.classList.add('active');
+        const activeBtn = drawingSubbar.querySelector('.draw-btn.active');
+        drawState.tool = activeBtn?.getAttribute('data-draw') || 'poligono';
+        updateDrawColorLabel();
+        showToast('Clique no mapa para adicionar pontos. Duplo clique ou Enter para concluir. Esc para cancelar.');
+      } else {
+        setMapTool('select');
       }
     });
 
-    drawingSubbar.querySelectorAll('.draw-btn').forEach(btn => {
+    drawingSubbar.querySelectorAll('.draw-btn[data-draw]').forEach(btn => {
       btn.addEventListener('click', () => {
-        drawingSubbar.querySelectorAll('.draw-btn').forEach(b => b.classList.remove('active'));
+        drawingSubbar.querySelectorAll('.draw-btn[data-draw]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const mode = btn.getAttribute('data-draw');
+        discardDraft();
+        drawState.tool = mode;
+        updateDrawColorLabel();
         if (mode === 'linha') showToast('Modo de desenho de linha ativado');
         if (mode === 'poligono') showToast('Modo de polígono ativado');
       });
     });
   }
+
+  document.querySelectorAll('#draw-color-swatches .color-swatch').forEach(btn => {
+    btn.addEventListener('click', () => setDrawColor(btn.dataset.color));
+  });
+  if (drawColorPicker) {
+    drawColorPicker.addEventListener('input', () => setDrawColor(drawColorPicker.value));
+  }
+
+  if (btnNovaMissao && markerSubbar) {
+    btnNovaMissao.addEventListener('click', () => {
+      floatingPanels.forEach(panel => panel.classList.add('hidden'));
+      toolButtons.forEach(b => b.classList.remove('active'));
+      const willOpen = markerSubbar.classList.contains('hidden');
+      if (willOpen) {
+        setMapTool('place');
+        markerSubbar.classList.remove('hidden');
+        btnNovaMissao.classList.add('active');
+      } else {
+        setMapTool('select');
+      }
+    });
+
+    markerSubbar.querySelectorAll('.draw-btn[data-place]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        markerSubbar.querySelectorAll('.draw-btn[data-place]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        placeState.type = btn.getAttribute('data-place');
+        map.getContainer().classList.add('place-cursor');
+        setFeatureClicksEnabled(false);
+        showToast(PLACE_TOAST[placeState.type] || PLACE_TOAST.marcador);
+      });
+    });
+  }
+
+  function openShapeEdit() {
+    const record = selection.record;
+    if (!record) return;
+    const nameInput = document.getElementById('input-shape-name');
+    const strokeInput = document.getElementById('input-shape-stroke');
+    const fillInput = document.getElementById('input-shape-fill');
+    const fillGroup = document.getElementById('shape-fill-group');
+    if (nameInput) nameInput.value = record.titulo;
+    if (strokeInput) strokeInput.value = record.color;
+    if (fillInput) fillInput.value = record.fillColor || record.color;
+    if (fillGroup) fillGroup.classList.toggle('hidden', record.tipo === 'linha');
+    syncSwatchActive('edit-stroke-swatches', record.color);
+    syncSwatchActive('edit-fill-swatches', record.fillColor || record.color);
+    if (shapeEditPanel) shapeEditPanel.classList.remove('hidden');
+  }
+
+  function saveShapeEdit() {
+    const record = selection.record;
+    if (!record) return;
+    const nameInput = document.getElementById('input-shape-name');
+    const strokeInput = document.getElementById('input-shape-stroke');
+    const fillInput = document.getElementById('input-shape-fill');
+    const name = (nameInput?.value || '').trim() || record.titulo;
+    const stroke = strokeInput?.value || record.color;
+    const fill = fillInput?.value || record.fillColor || stroke;
+    record.titulo = name;
+    record.color = stroke;
+    record.fillColor = fill;
+    if (record.tipo === 'linha') {
+      record.layer.setStyle(lineStyle(stroke));
+    } else {
+      record.layer.setStyle(polyStyle(stroke, fill));
+    }
+    record.layer.unbindTooltip();
+    record.layer.bindTooltip(name, { permanent: false });
+    if (shapeEditPanel) shapeEditPanel.classList.add('hidden');
+    showToast('Alterações salvas.');
+  }
+
+  function openDeleteConfirm() {
+    if (!selection.record || !confirmDeleteEl) return;
+    const msgEl = document.getElementById('confirm-delete-message');
+    if (msgEl) {
+      msgEl.textContent = selection.record.tipo === 'linha'
+        ? 'Excluir esta linha? Isso não pode ser desfeito.'
+        : 'Excluir esta área? Isso não pode ser desfeito.';
+    }
+    confirmDeleteEl.classList.remove('hidden');
+  }
+
+  function deleteSelectedShape() {
+    const record = selection.record;
+    if (!record) return;
+    layerGroups.areas.removeLayer(record.layer);
+    layerGroups.areas.removeLayer(record.casing);
+    const idx = desenhos.indexOf(record);
+    if (idx >= 0) desenhos.splice(idx, 1);
+    clearSelection();
+    if (confirmDeleteEl) confirmDeleteEl.classList.add('hidden');
+    showToast(record.tipo === 'linha' ? 'Linha excluída.' : 'Área excluída.');
+  }
+
+  const btnShapeEdit = document.getElementById('btn-shape-edit');
+  const btnShapeDelete = document.getElementById('btn-shape-delete');
+  const btnShapeEditCancel = document.getElementById('btn-shape-edit-cancel');
+  const btnShapeEditSave = document.getElementById('btn-shape-edit-save');
+  const btnConfirmCancel = document.getElementById('btn-confirm-cancel');
+  const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+
+  if (btnShapeEdit) btnShapeEdit.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openShapeEdit();
+  });
+  if (btnShapeDelete) btnShapeDelete.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openDeleteConfirm();
+  });
+  if (btnShapeEditCancel) btnShapeEditCancel.addEventListener('click', () => {
+    if (shapeEditPanel) shapeEditPanel.classList.add('hidden');
+  });
+  if (btnShapeEditSave) btnShapeEditSave.addEventListener('click', saveShapeEdit);
+  if (btnConfirmCancel) btnConfirmCancel.addEventListener('click', () => {
+    if (confirmDeleteEl) confirmDeleteEl.classList.add('hidden');
+  });
+  if (btnConfirmDelete) btnConfirmDelete.addEventListener('click', deleteSelectedShape);
+  if (confirmDeleteEl) {
+    confirmDeleteEl.addEventListener('click', (e) => {
+      if (e.target === confirmDeleteEl) confirmDeleteEl.classList.add('hidden');
+    });
+  }
+
+  function wireEditSwatches(containerId, inputId) {
+    const input = document.getElementById(inputId);
+    document.querySelectorAll(`#${containerId} .color-swatch`).forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (input) input.value = btn.dataset.color;
+        syncSwatchActive(containerId, btn.dataset.color);
+      });
+    });
+    if (input) {
+      input.addEventListener('input', () => syncSwatchActive(containerId, input.value));
+    }
+  }
+  wireEditSwatches('edit-stroke-swatches', 'input-shape-stroke');
+  wireEditSwatches('edit-fill-swatches', 'input-shape-fill');
 
   // Dropdown de categoria (Filtros de Exibição)
   const filterTrigger = document.getElementById('filter-category-trigger');
@@ -631,14 +1288,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 6. MODAL DE CRIAÇÃO (+ Novo Elemento)
-  const btnNovaMissao = document.getElementById('btn-nova-missao');
   const creationModal = document.getElementById('creation-modal');
   const btnCancelModal = document.getElementById('btn-cancel-modal');
   const btnCloseModalX = document.getElementById('btn-close-modal-x');
   const creationForm = document.getElementById('creation-form');
   const modalTabs = document.querySelectorAll('.modal-tab');
+  const modalTitleEl = document.getElementById('creation-modal-title');
+  const modalTabsEl = document.getElementById('creation-modal-tabs');
   const btnSubmitModal = document.getElementById('btn-submit-modal');
   let currentActiveTab = 'missao';
+  const MODAL_TITLES = {
+    missao: 'Nova missão',
+    mutirao: 'Vincular mutirão',
+    memoria: 'Nova memória',
+    marcador: 'Novo marcador'
+  };
 
   // Memória Upload Elements
   const dropzoneMemoria = document.getElementById('dropzone-memoria');
@@ -654,15 +1318,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const optionTipoInteresse = document.getElementById('option-tipo-interesse');
 
   function openModal() {
-    closeDrawingMode();
     if (creationModal) creationModal.classList.add('open');
   }
 
   function closeModal() {
     if (creationModal) creationModal.classList.remove('open');
+    if (modalTabsEl) modalTabsEl.classList.remove('hidden');
+    if (modalTitleEl) modalTitleEl.textContent = 'Novo Elemento no Mapa';
+    placeState.latlng = null;
   }
 
-  if (btnNovaMissao) btnNovaMissao.addEventListener('click', openModal);
+  function openCreationModalForPlacement() {
+    if (modalTitleEl) modalTitleEl.textContent = MODAL_TITLES[placeState.type] || 'Novo marcador';
+    if (modalTabsEl) modalTabsEl.classList.add('hidden');
+    setActiveTab(placeState.type || 'marcador');
+    openModal();
+  }
+
   if (btnCancelModal) btnCancelModal.addEventListener('click', closeModal);
   if (btnCloseModalX) btnCloseModalX.addEventListener('click', closeModal);
 
@@ -794,7 +1466,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (creationForm) {
     creationForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const center = map.getCenter();
+      const center = placeState.latlng || map.getCenter();
 
       if (currentActiveTab === 'missao') {
         const titleInput = document.getElementById('input-titulo-missao').value || 'Nova Missão no Território';
@@ -828,7 +1500,7 @@ document.addEventListener('DOMContentLoaded', () => {
           .bindPopup(newPopup)
           .addTo(layerGroups.missoes);
 
-        showToast(`Missão "${titleInput}" criada com sucesso.`);
+        showToast(`Missão "${titleInput}" criada no ponto escolhido.`);
 
       } else if (currentActiveTab === 'mutirao') {
         const mutiraoTitle = document.getElementById('select-mutirao-existente').value;
@@ -857,7 +1529,7 @@ document.addEventListener('DOMContentLoaded', () => {
           .bindPopup(newPopup)
           .addTo(layerGroups.mutiroes);
 
-        showToast(`"${mutiraoTitle}" foi vinculado a esta localização.`);
+        showToast(`"${mutiraoTitle}" vinculado no ponto escolhido.`);
 
       } else if (currentActiveTab === 'memoria') {
         const memoriaTitle = document.getElementById('input-titulo-memoria').value || 'Memória Fotográfica';
@@ -881,10 +1553,13 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         L.marker([center.lat, center.lng], { icon: newIcon })
-          .on('click', () => openMemoryModal(newMemoria))
+          .on('click', () => {
+            if (mapTool !== 'select') return;
+            openMemoryModal(newMemoria);
+          })
           .addTo(layerGroups.memorias);
 
-        showToast(`Memória "${memoriaTitle}" salva no mapa.`);
+        showToast(`Memória "${memoriaTitle}" salva no ponto escolhido.`);
 
       } else if (currentActiveTab === 'marcador') {
         const tipoMarcador = document.querySelector('input[name="tipo-marcador"]:checked')?.value || 'alerta';
@@ -918,11 +1593,12 @@ document.addEventListener('DOMContentLoaded', () => {
           .bindPopup(newPopup)
           .addTo(layerGroups.marcadores);
 
-        showToast(`Marcador "${marcadorTitle}" adicionado ao mapa.`);
+        showToast(`Marcador "${marcadorTitle}" adicionado no ponto escolhido.`);
       }
 
       // Resetar formulário e fechar modal
       closeModal();
+      setMapTool('select');
       creationForm.reset();
       if (btnRemovePhoto && loadedMemoriaPhoto) {
         btnRemovePhoto.click();
@@ -934,10 +1610,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // 7. FUNÇÃO PARA CRIAR MUTIRÃO VINCULADO À MISSÃO
   window.openCreateMutiraoForMissao = function(missaoTitulo) {
     if (creationModal) {
+      placeState.type = 'mutirao';
+      placeState.latlng = map.getCenter();
+      if (modalTitleEl) modalTitleEl.textContent = 'Vincular mutirão';
+      if (modalTabsEl) modalTabsEl.classList.add('hidden');
       openModal();
       setActiveTab('mutirao');
 
-      // Selecionar o mutirão ou adicionar aviso no toast
       const selectMutirao = document.getElementById('select-mutirao-existente');
       if (selectMutirao) {
         selectMutirao.focus();
