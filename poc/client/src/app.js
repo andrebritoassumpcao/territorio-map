@@ -67,18 +67,38 @@ document.addEventListener('DOMContentLoaded', () => {
     record: null,
     bbox: null
   };
+  const mapItems = [];
+  const parentById = new Map();
+  let featureSeq = 20;
+  let filtersReady = false;
+  let lastEmptyPeriodToast = '';
 
-  function casingStyle(isPoly) {
+  function newFeatureId(prefix) {
+    featureSeq += 1;
+    return `${prefix}${featureSeq}`;
+  }
+
+  function registerMapItem(kind, data, marker) {
+    const entry = { kind, data, marker };
+    mapItems.push(entry);
+    if (kind === 'missao' || kind === 'marcador') {
+      parentById.set(data.id, entry);
+    }
+    return entry;
+  }
+
+  function casingStyle() {
     return {
       color: '#ffffff',
-      weight: isPoly ? 7 : 8,
+      weight: 8,
       opacity: 0.95,
       fill: false,
       fillOpacity: 0,
       interactive: true,
       bubblingMouseEvents: true,
       lineJoin: 'round',
-      lineCap: 'round'
+      lineCap: 'round',
+      className: 'shape-path'
     };
   }
 
@@ -89,24 +109,31 @@ document.addEventListener('DOMContentLoaded', () => {
       lineJoin: 'round',
       lineCap: 'round',
       interactive: true,
-      bubblingMouseEvents: true
+      bubblingMouseEvents: true,
+      className: 'shape-path'
     };
   }
 
   function polyStyle(color, fillColor) {
+    const fill = fillColor || color;
     return {
-      color,
-      weight: 4,
-      fillColor: fillColor || color,
+      stroke: true,
+      color: fill,
+      weight: 3,
+      dashArray: '10, 7',
+      opacity: 1,
+      fill: true,
+      fillColor: fill,
       fillOpacity: 0.28,
       lineJoin: 'round',
       interactive: true,
-      bubblingMouseEvents: true
+      bubblingMouseEvents: true,
+      className: 'shape-path'
     };
   }
 
   function draftCasingStyle() {
-    return { ...casingStyle(drawState.tool !== 'linha'), interactive: false };
+    return { ...casingStyle(), interactive: false };
   }
 
   function draftLineStyle() {
@@ -149,24 +176,94 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       if (mapTool !== 'select') return;
+      if (record._didDrag) {
+        record._didDrag = false;
+        return;
+      }
       selectShape(record);
     };
     record.layer.on('click', onShapeClick);
-    record.casing.on('click', onShapeClick);
+    if (record.casing) record.casing.on('click', onShapeClick);
+    bindShapeDrag(record);
+  }
+
+  function cloneLatLngs(latlngs) {
+    return (latlngs || []).map(ll => (
+      Array.isArray(ll) ? cloneLatLngs(ll) : L.latLng(ll.lat, ll.lng)
+    ));
+  }
+
+  function offsetLatLngs(latlngs, dlat, dlng) {
+    return (latlngs || []).map(ll => (
+      Array.isArray(ll)
+        ? offsetLatLngs(ll, dlat, dlng)
+        : L.latLng(ll.lat + dlat, ll.lng + dlng)
+    ));
+  }
+
+  function bindShapeDrag(record) {
+    const onMouseDown = (e) => {
+      if (mapTool !== 'select' || placeState.pickingInside) return;
+      L.DomEvent.stop(e);
+      const origin = e.latlng;
+      const originPoint = map.latLngToLayerPoint(origin);
+      const startLayer = cloneLatLngs(record.layer.getLatLngs());
+      const startCasing = record.casing ? cloneLatLngs(record.casing.getLatLngs()) : null;
+      let dragging = false;
+      record._didDrag = false;
+      map.dragging.disable();
+
+      const onMove = (ev) => {
+        const pt = map.latLngToLayerPoint(ev.latlng);
+        if (!dragging && originPoint.distanceTo(pt) < 4) return;
+        if (!dragging) {
+          dragging = true;
+          record._didDrag = true;
+          map.getContainer().classList.add('shape-grabbing');
+          if (selection.record !== record) selectShape(record);
+        }
+        const dlat = ev.latlng.lat - origin.lat;
+        const dlng = ev.latlng.lng - origin.lng;
+        record.layer.setLatLngs(offsetLatLngs(startLayer, dlat, dlng));
+        if (record.casing) record.casing.setLatLngs(offsetLatLngs(startCasing, dlat, dlng));
+        record.latlngs = flattenLatLngs(record.layer.getLatLngs()).map(ll => [ll.lat, ll.lng]);
+        if (selection.record === record && selection.bbox) {
+          selection.bbox.setBounds(record.layer.getBounds());
+          updateShapeActionsPosition();
+        }
+      };
+
+      const onUp = () => {
+        map.off('mousemove', onMove);
+        map.off('mouseup', onUp);
+        map.getContainer().classList.remove('shape-grabbing');
+        if (mapTool === 'select' && !placeState.pickingInside) {
+          map.dragging.enable();
+        }
+        if (dragging) {
+          skipNextMapClick = true;
+          setTimeout(() => { skipNextMapClick = false; }, 0);
+        }
+      };
+
+      map.on('mousemove', onMove);
+      map.on('mouseup', onUp);
+    };
+
+    record.layer.on('mousedown', onMouseDown);
+    if (record.casing) record.casing.on('mousedown', onMouseDown);
   }
 
   function addShapeToMap({ tipo, titulo, latlngs, color, fillColor }) {
     const isLine = tipo === 'linha';
     const stroke = color || '#1f7a4c';
     const fill = fillColor || stroke;
-    const casing = isLine
-      ? L.polyline(latlngs, casingStyle(false))
-      : L.polygon(latlngs, casingStyle(true));
+    const casing = isLine ? L.polyline(latlngs, casingStyle()) : null;
     const layer = isLine
       ? L.polyline(latlngs, lineStyle(stroke))
       : L.polygon(latlngs, polyStyle(stroke, fill));
 
-    casing.addTo(layerGroups.areas);
+    if (casing) casing.addTo(layerGroups.areas);
     layer.addTo(layerGroups.areas);
     layer.bindTooltip(titulo, { permanent: false });
 
@@ -206,8 +303,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return `<p class="card-vinculo">Vinculada à ${shapeKindLabel(vinculo.tipo)} <strong>${vinculo.titulo}</strong>.</p>`;
   }
 
-  function memoryActionHtml(kind, titulo, lat, lng) {
-    return `<button type="button" class="card-btn card-btn-purple" onclick="openCreateMemoryFor('${kind}','${escapeJsString(titulo)}',${lat},${lng})">Adicionar memória</button>`;
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   function flattenLatLngs(latlngs) {
@@ -253,6 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
       status: 'Em andamento',
       prazo: '30/09/2026',
       participantes: 18,
+      categoria: 'recursos-hidricos',
       tipo: 'missao'
     },
     {
@@ -263,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
       status: 'Em andamento',
       prazo: '15/10/2026',
       participantes: 24,
+      categoria: 'meio-ambiente',
       tipo: 'missao'
     },
     {
@@ -273,6 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
       status: 'Planejado',
       prazo: '12/11/2026',
       participantes: 9,
+      categoria: 'meio-ambiente',
       tipo: 'missao'
     },
     {
@@ -283,6 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
       status: 'Em andamento',
       prazo: '30/12/2026',
       participantes: 12,
+      categoria: 'recursos-hidricos',
       tipo: 'missao'
     }
   ];
@@ -295,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lng: -43.344,
       titulo: 'Limpeza do Rio Sarapuí',
       missaoPai: 'Rio Vivo',
-      dataHora: '24/09 • 09:00',
+      dataHora: '24/09/2026 • 09:00',
       vagas: '14/30 vagas',
       tipo: 'mutirao'
     },
@@ -305,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lng: -43.346,
       titulo: 'Plantio Coletivo de 200 Mudas',
       missaoPai: 'Reflorestamento',
-      dataHora: '28/09 • 08:30',
+      dataHora: '28/09/2026 • 08:30',
       vagas: '22/25 vagas',
       tipo: 'mutirao'
     },
@@ -315,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lng: -43.339,
       titulo: 'Oficina de Bio-Construção',
       missaoPai: 'Horta Urbana',
-      dataHora: '05/10 • 14:00',
+      dataHora: '05/10/2026 • 14:00',
       vagas: '8/15 vagas',
       tipo: 'mutirao'
     }
@@ -329,56 +434,58 @@ document.addEventListener('DOMContentLoaded', () => {
     'https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=600&q=80'
   ];
 
-  const memoriasData = [
-    {
-      id: 'mem1',
-      lat: -22.784,
-      lng: -43.340,
-      titulo: 'Antes da recuperação da nascente',
-      autor: 'André',
-      data: '12/08/2026',
-      fotoUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80',
-      descricao: 'Registro fotográfico da área antes do plantio comunitário e obras de macrodrenagem.',
-      tipo: 'memoria',
-      comentarios: [
-        { initials: 'AW', name: 'Amanda', date: '13/08/2026', text: 'Importante ter esse registro do antes.' }
-      ]
-    },
-    {
-      id: 'mem2',
-      lat: -22.787,
-      lng: -43.343,
-      titulo: 'Registro da Grande Enchente',
-      autor: 'Dona Maria',
-      data: '04/03/2026',
-      fotoUrl: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80',
-      descricao: 'Nível da água na Avenida Comendador Teles durante a tempestade de verão.',
-      tipo: 'memoria',
-      comentarios: [
-        { initials: 'JS', name: 'José', date: '05/03/2026', text: 'Nunca tinha visto a água tão alta.' }
-      ]
-    },
-    {
-      id: 'mem3',
-      lat: -22.780,
-      lng: -43.349,
-      titulo: 'Primeira colheita da horta',
-      autor: 'João',
-      data: '19/05/2026',
-      fotoUrl: 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=600&q=80',
-      descricao: 'Celebração da comunidade com a primeira colheita orgânica do bairro.',
-      tipo: 'memoria',
-      comentarios: [
-        { initials: 'MD', name: 'Maria', date: '19/05/2026', text: 'Que momento incrível! A horta ficou linda' },
-        { initials: 'CS', name: 'Carlos', date: '20/05/2026', text: 'Parabéns a todos que participaram! Vamos marcar a próxima colheita.' },
-        { initials: 'AL', name: 'Ana', date: '20/05/2026', text: 'As crianças adoraram participar!' }
-      ]
-    }
-  ];
-
-  memoriasData.forEach(item => {
+  function attachFotos(item) {
     item.fotos = [item.fotoUrl, ...extraFotos];
+    return item;
+  }
+
+  const memNascente = attachFotos({
+    id: 'mem1',
+    titulo: 'Antes da recuperação da nascente',
+    autor: 'André',
+    data: '12/08/2026',
+    fotoUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80',
+    descricao: 'Registro fotográfico da área antes do plantio comunitário e obras de macrodrenagem.',
+    tipo: 'memoria',
+    comentarios: [
+      { initials: 'AW', name: 'Amanda', date: '13/08/2026', text: 'Importante ter esse registro do antes.' }
+    ]
   });
+
+  const memHorta = attachFotos({
+    id: 'mem3',
+    titulo: 'Primeira colheita da horta',
+    autor: 'João',
+    data: '19/05/2026',
+    fotoUrl: 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=600&q=80',
+    descricao: 'Celebração da comunidade com a primeira colheita orgânica do bairro.',
+    tipo: 'memoria',
+    comentarios: [
+      { initials: 'MD', name: 'Maria', date: '19/05/2026', text: 'Que momento incrível! A horta ficou linda' },
+      { initials: 'CS', name: 'Carlos', date: '20/05/2026', text: 'Parabéns a todos que participaram! Vamos marcar a próxima colheita.' },
+      { initials: 'AL', name: 'Ana', date: '20/05/2026', text: 'As crianças adoraram participar!' }
+    ]
+  });
+
+  const memDescarte = attachFotos({
+    id: 'mem4',
+    titulo: 'Entulho na calçada',
+    autor: 'Camila',
+    data: '22/07/2026',
+    fotoUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80',
+    descricao: 'Acúmulo de resíduos no ponto de descarte irregular.',
+    tipo: 'memoria',
+    comentarios: [
+      { initials: 'CM', name: 'Camila', date: '22/07/2026', text: 'Isso piora a cada chuva.' }
+    ]
+  });
+
+  const memoriasData = [];
+
+  missoesData[0].memorias = [memNascente];
+  missoesData[1].memorias = [memHorta];
+  missoesData[2].memorias = [];
+  missoesData[3].memorias = [];
 
   // (D) MARCADORES (📍 Vermelho/Teal)
   const marcadoresData = [
@@ -388,7 +495,8 @@ document.addEventListener('DOMContentLoaded', () => {
       lng: -43.345,
       titulo: 'Ponto de Descarte Irregular',
       descricao: 'Área com acúmulo de entulho necessitando de fiscalização.',
-      tipo: 'marcador'
+      tipo: 'marcador',
+      memorias: [memDescarte]
     },
     {
       id: 'mar2',
@@ -396,7 +504,8 @@ document.addEventListener('DOMContentLoaded', () => {
       lng: -43.338,
       titulo: 'Pluviômetro Comunitário 01',
       descricao: 'Estação pluviométrica mantida pelos moradores.',
-      tipo: 'marcador'
+      tipo: 'marcador',
+      memorias: []
     }
   ];
 
@@ -419,6 +528,203 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Fallback de Imagem Confiável caso haja falha de conexão
   const fallbackImg = 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80';
+
+  function parseDisplayDate(value) {
+    if (!value) return null;
+    const raw = String(value).trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+      const d = new Date(`${raw.slice(0, 10)}T12:00:00`);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    const m = raw.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/);
+    if (!m) return null;
+    const year = m[3] ? Number(m[3]) : 2026;
+    return new Date(year, Number(m[2]) - 1, Number(m[1]), 12);
+  }
+
+  function formatMemoryDate(value) {
+    const d = parseDisplayDate(value);
+    if (!d) return value || '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}/${d.getFullYear()}`;
+  }
+
+  function missionStatusKey(status) {
+    const s = String(status || '').toLowerCase();
+    if (s.includes('conclu')) return 'concluidas';
+    if (s.includes('planej')) return 'planejadas';
+    return 'andamento';
+  }
+
+  function categoriaKey(value) {
+    const v = String(value || '').toLowerCase();
+    if (['meio-ambiente', 'recursos-hidricos', 'riscos'].includes(v)) return v;
+    if (v.includes('risco') || v.includes('alag')) return 'riscos';
+    if (v.includes('nascent') || v.includes('hidr') || v.includes('rio') || v.includes('água') || v.includes('agua')) {
+      return 'recursos-hidricos';
+    }
+    return 'meio-ambiente';
+  }
+
+  function memoryPanelHtml(kind, data) {
+    const memorias = data.memorias || [];
+    const addBtn = `<button type="button" class="card-btn card-btn-purple" onclick="openCreateMemoryFor('${kind}','${escapeJsString(data.id)}')">Adicionar memória</button>`;
+    if (!memorias.length) {
+      return `
+        <div class="card-memory-empty">
+          <p class="card-memory-empty-title">Nenhuma memória ainda</p>
+          <p class="card-memory-empty-text">Guarde fotos e relatos deste lugar.</p>
+          ${addBtn}
+        </div>
+      `;
+    }
+    const items = memorias.map((m, i) => `
+      <button type="button" class="card-memory-item" onclick="openParentMemory('${kind}','${escapeJsString(data.id)}',${i})">
+        <img src="${m.fotoUrl}" alt="" class="card-memory-thumb" onerror="this.onerror=null; this.src='${fallbackImg}';" />
+        <span class="card-memory-copy">
+          <span class="card-memory-title">${escapeHtml(m.titulo)}</span>
+          <span class="card-memory-date">${escapeHtml(formatMemoryDate(m.data))}</span>
+        </span>
+      </button>
+    `).join('');
+    return `
+      <div class="card-memory-list">${items}</div>
+      ${addBtn}
+    `;
+  }
+
+  function missaoSobreInner(data) {
+    const desc = data.descricao
+      ? `<p class="card-desc">${escapeHtml(data.descricao)}</p>`
+      : '';
+    const cat = data.categoriaLabel
+      ? `<div class="card-meta-item">Categoria: <strong>${escapeHtml(data.categoriaLabel)}</strong></div>`
+      : '';
+    const volunteers = data.participantes
+      ? `<div class="card-meta-item">Voluntários: <strong>${data.participantes} inscritos</strong></div>`
+      : `<div class="card-meta-item">Participantes: <strong>1 participante (Você)</strong></div>`;
+    const avatars = data.participantes
+      ? `
+        <div class="card-participants">
+          <div class="avatar-stack">
+            <div class="mini-avatar">AW</div>
+            <div class="mini-avatar">JS</div>
+            <div class="mini-avatar">MR</div>
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">+15 outros participantes</span>
+        </div>
+      `
+      : '';
+    const detailsLabel = data.participantes ? 'Ver detalhes da missão' : 'Ver missão';
+    return `
+      <div class="card-header-badge">
+        <span class="card-type-tag missao">Missão</span>
+        <span class="card-status">${escapeHtml(data.status || '')}</span>
+      </div>
+      <h3 class="card-title">${escapeHtml(data.titulo)}</h3>
+      ${desc}
+      <div class="card-meta">
+        ${cat}
+        <div class="card-meta-item">Prazo: <strong>${escapeHtml(formatMemoryDate(data.prazo))}</strong></div>
+        ${volunteers}
+      </div>
+      ${avatars}
+      ${vinculoShapeHtml(data.vinculo)}
+      <div class="card-action-group">
+        <button class="card-btn card-btn-primary" type="button" onclick="showToast('Abrindo detalhes da missão...')">${detailsLabel}</button>
+        <button class="card-btn card-btn-outline-amber" type="button" onclick="openCreateMutiraoForMissao('${escapeJsString(data.titulo)}')">
+          Criar mutirão para esta missão
+        </button>
+      </div>
+    `;
+  }
+
+  function marcadorSobreInner(data) {
+    const tag = data.tagTitle || 'Marcador';
+    const tagClass = data.badgeClass || 'marcador';
+    const status = data.status
+      ? `<span class="card-status">${escapeHtml(data.status)}</span>`
+      : '';
+    const cat = data.categoriaLabel
+      ? `<div class="card-meta-item">Categoria: <strong>${escapeHtml(data.categoriaLabel)}</strong></div>`
+      : '';
+    const desc = data.descricao
+      ? `<p class="card-desc">${escapeHtml(data.descricao)}</p>`
+      : '';
+    return `
+      <div class="card-header-badge">
+        <span class="card-type-tag ${tagClass}">${escapeHtml(tag)}</span>
+        ${status}
+      </div>
+      <h3 class="card-title">${escapeHtml(data.titulo)}</h3>
+      ${desc}
+      ${cat ? `<div class="card-meta">${cat}</div>` : ''}
+      ${vinculoShapeHtml(data.vinculo)}
+    `;
+  }
+
+  function buildParentCardHtml(kind, data, activeTab = 'sobre') {
+    const id = data.id;
+    const memCount = (data.memorias || []).length;
+    const sobreActive = activeTab !== 'memorias';
+    const badge = memCount ? `<span class="card-tab-badge">${memCount}</span>` : '';
+    return `
+      <div class="context-card" data-card-id="${id}">
+        <div class="card-tabs" role="tablist" aria-label="Conteúdo do card">
+          <button type="button" class="card-tab${sobreActive ? ' is-active' : ''}" role="tab"
+            aria-selected="${sobreActive}" aria-controls="panel-sobre-${id}" id="tab-sobre-${id}"
+            onclick="switchCardTab('${id}','sobre')">Sobre</button>
+          <button type="button" class="card-tab${!sobreActive ? ' is-active' : ''}" role="tab"
+            aria-selected="${!sobreActive}" aria-controls="panel-memorias-${id}" id="tab-memorias-${id}"
+            onclick="switchCardTab('${id}','memorias')">Memórias${badge}</button>
+        </div>
+        <div class="card-tab-panel" id="panel-sobre-${id}" role="tabpanel" aria-labelledby="tab-sobre-${id}" ${sobreActive ? '' : 'hidden'}>
+          ${kind === 'missao' ? missaoSobreInner(data) : marcadorSobreInner(data)}
+        </div>
+        <div class="card-tab-panel" id="panel-memorias-${id}" role="tabpanel" aria-labelledby="tab-memorias-${id}" ${sobreActive ? 'hidden' : ''}>
+          ${memoryPanelHtml(kind, data)}
+        </div>
+      </div>
+    `;
+  }
+
+  const POPUP_OPTS = { maxWidth: 340, minWidth: 300 };
+
+  function refreshParentPopup(id, activeTab = 'memorias') {
+    const entry = parentById.get(id);
+    if (!entry) return;
+    entry.marker.setPopupContent(buildParentCardHtml(entry.kind, entry.data, activeTab));
+    if (!entry.marker.isPopupOpen()) entry.marker.openPopup();
+    else entry.marker.getPopup()?.update();
+  }
+
+  window.switchCardTab = function(id, tab) {
+    const card = document.querySelector(`.context-card[data-card-id="${id}"]`);
+    if (!card) return;
+    const sobre = tab === 'sobre';
+    const tabSobre = card.querySelector('#tab-sobre-' + id);
+    const tabMem = card.querySelector('#tab-memorias-' + id);
+    const panelSobre = card.querySelector('#panel-sobre-' + id);
+    const panelMem = card.querySelector('#panel-memorias-' + id);
+    tabSobre?.classList.toggle('is-active', sobre);
+    tabMem?.classList.toggle('is-active', !sobre);
+    if (tabSobre) tabSobre.setAttribute('aria-selected', String(sobre));
+    if (tabMem) tabMem.setAttribute('aria-selected', String(!sobre));
+    if (panelSobre) panelSobre.hidden = !sobre;
+    if (panelMem) panelMem.hidden = sobre;
+    const popup = parentById.get(id)?.marker.getPopup();
+    if (popup && popup._map) {
+      popup._updateLayout();
+      popup._updatePosition();
+    }
+  };
+
+  window.openParentMemory = function(kind, id, index) {
+    const entry = parentById.get(id);
+    const item = entry?.data.memorias?.[index];
+    if (item) openMemoryModal(item);
+  };
 
   const memoryModal = document.getElementById('memory-modal');
   const memoryFeatured = document.getElementById('memory-featured');
@@ -530,39 +836,10 @@ document.addEventListener('DOMContentLoaded', () => {
       typeBadge('missao'),
       item.titulo
     );
-    const popupContent = `
-      <div class="context-card">
-        <div class="card-header-badge">
-          <span class="card-type-tag missao">Missão</span>
-          <span class="card-status">${item.status}</span>
-        </div>
-        <h3 class="card-title">${item.titulo}</h3>
-        <div class="card-meta">
-          <div class="card-meta-item">📅 Prazo: <strong>${item.prazo}</strong></div>
-          <div class="card-meta-item">👥 Voluntários: <strong>${item.participantes} inscritos</strong></div>
-        </div>
-        <div class="card-participants">
-          <div class="avatar-stack">
-            <div class="mini-avatar">AW</div>
-            <div class="mini-avatar">JS</div>
-            <div class="mini-avatar">MR</div>
-          </div>
-          <span style="font-size: 0.75rem; color: var(--text-muted);">+15 outros participantes</span>
-        </div>
-        <div class="card-action-group">
-          <button class="card-btn card-btn-primary" onclick="showToast('Abrindo detalhes da missão...')">
-            Ver detalhes da missão →
-          </button>
-          <button class="card-btn card-btn-outline-amber" onclick="openCreateMutiraoForMissao('${escapeJsString(item.titulo)}')">
-            Criar mutirão para esta missão
-          </button>
-          ${memoryActionHtml('missao', item.titulo, item.lat, item.lng)}
-        </div>
-      </div>
-    `;
-    L.marker([item.lat, item.lng], { icon })
-      .bindPopup(popupContent)
+    const marker = L.marker([item.lat, item.lng], { icon })
+      .bindPopup(buildParentCardHtml('missao', item), POPUP_OPTS)
       .addTo(layerGroups.missoes);
+    registerMapItem('missao', item, marker);
   });
 
   // Renderizar Mutirões
@@ -572,7 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
       item.titulo
     );
     const popupContent = `
-      <div class="context-card">
+      <div class="context-card context-card-simple">
         <div class="card-header-badge">
           <span class="card-type-tag mutirao">Mutirão</span>
         </div>
@@ -589,9 +866,10 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
       </div>
     `;
-    L.marker([item.lat, item.lng], { icon })
-      .bindPopup(popupContent)
+    const marker = L.marker([item.lat, item.lng], { icon })
+      .bindPopup(popupContent, POPUP_OPTS)
       .addTo(layerGroups.mutiroes);
+    registerMapItem('mutirao', item, marker);
   });
 
   // Renderizar Memórias
@@ -608,12 +886,13 @@ document.addEventListener('DOMContentLoaded', () => {
       iconAnchor: [22, 22]
     });
 
-    L.marker([item.lat, item.lng], { icon })
+    const marker = L.marker([item.lat, item.lng], { icon })
       .on('click', () => {
         if (mapTool !== 'select') return;
         openMemoryModal(item);
       })
       .addTo(layerGroups.memorias);
+    registerMapItem('memoria', item, marker);
   });
 
   // Renderizar Marcadores
@@ -622,21 +901,10 @@ document.addEventListener('DOMContentLoaded', () => {
       typeBadge('marcador'),
       item.titulo
     );
-    const popupContent = `
-      <div class="context-card">
-        <div class="card-header-badge">
-          <span class="card-type-tag marcador">Marcador</span>
-        </div>
-        <h3 class="card-title">${item.titulo}</h3>
-        <p style="font-size: 0.82rem; color: var(--text-muted);">${item.descricao}</p>
-        <div class="card-action-group">
-          ${memoryActionHtml('marcador', item.titulo, item.lat, item.lng)}
-        </div>
-      </div>
-    `;
-    L.marker([item.lat, item.lng], { icon })
-      .bindPopup(popupContent)
+    const marker = L.marker([item.lat, item.lng], { icon })
+      .bindPopup(buildParentCardHtml('marcador', item), POPUP_OPTS)
       .addTo(layerGroups.marcadores);
+    registerMapItem('marcador', item, marker);
   });
 
   // (E) ÁREAS DE INTERVENÇÃO
@@ -664,6 +932,16 @@ document.addEventListener('DOMContentLoaded', () => {
     color: '#d4832a',
     fillColor: '#d4832a'
   });
+  addShapeToMap({
+    tipo: 'linha',
+    titulo: 'Trilha da nascente',
+    latlngs: [
+      [-22.780, -43.340],
+      [-22.783, -43.341],
+      [-22.785, -43.339]
+    ],
+    color: '#1f7a4c'
+  });
 
   // 5. INTERAÇÕES E CONTROLES DE INTERFACE
 
@@ -678,6 +956,42 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   if (sidebarToggleBtn) sidebarToggleBtn.addEventListener('click', toggleSidebar);
   if (topbarSidebarToggleBtn) topbarSidebarToggleBtn.addEventListener('click', toggleSidebar);
+
+  const btnProfile = document.getElementById('btn-profile');
+  const profileMenu = document.getElementById('profile-menu');
+
+  function closeProfileMenu() {
+    if (!profileMenu || !btnProfile) return;
+    profileMenu.classList.add('hidden');
+    btnProfile.setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleProfileMenu() {
+    if (!profileMenu || !btnProfile) return;
+    const isOpen = !profileMenu.classList.contains('hidden');
+    profileMenu.classList.toggle('hidden', isOpen);
+    btnProfile.setAttribute('aria-expanded', String(!isOpen));
+  }
+
+  if (btnProfile && profileMenu) {
+    btnProfile.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleProfileMenu();
+    });
+    profileMenu.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', closeProfileMenu);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeProfileMenu();
+    });
+    profileMenu.querySelector('.profile-menu-link')?.addEventListener('click', () => {
+      showToast('Abrindo sua rede...');
+      closeProfileMenu();
+    });
+    profileMenu.querySelector('.profile-empty-btn')?.addEventListener('click', () => {
+      showToast('Vamos adicionar uma organização.');
+      closeProfileMenu();
+    });
+  }
 
   // Painéis Flutuantes (Camadas, Filtros, Legenda)
   const toolButtons = document.querySelectorAll('.tool-btn[data-panel]');
@@ -820,13 +1134,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mouseLatLng && pts.length) pts.push(mouseLatLng);
     if (pts.length < 2) return;
     const isLine = drawState.tool === 'linha';
-    drawState.draftCasing = isLine
-      ? L.polyline(pts, draftCasingStyle())
-      : L.polygon(pts, draftCasingStyle());
+    if (isLine) {
+      drawState.draftCasing = L.polyline(pts, draftCasingStyle());
+      drawState.draftCasing.addTo(draftGroup);
+    }
     drawState.draft = isLine
       ? L.polyline(pts, draftLineStyle())
       : L.polygon(pts, draftPolyStyle());
-    drawState.draftCasing.addTo(draftGroup);
     drawState.draft.addTo(draftGroup);
   }
 
@@ -1385,7 +1699,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const record = selection.record;
     if (!record) return;
     layerGroups.areas.removeLayer(record.layer);
-    layerGroups.areas.removeLayer(record.casing);
+    if (record.casing) layerGroups.areas.removeLayer(record.casing);
     const idx = desenhos.indexOf(record);
     if (idx >= 0) desenhos.splice(idx, 1);
     clearSelection();
@@ -1459,10 +1773,98 @@ document.addEventListener('DOMContentLoaded', () => {
   wireEditSwatches('edit-stroke-swatches', 'input-shape-stroke');
   wireEditSwatches('edit-fill-swatches', 'input-shape-fill');
 
-  // Dropdown de categoria (Filtros de Exibição)
+  // Filtros de exibição (status, categoria, período)
   const filterTrigger = document.getElementById('filter-category-trigger');
   const filterMenu = document.getElementById('filter-category-menu');
   const filterLabel = document.getElementById('filter-category-label');
+  const filterDateFrom = document.getElementById('filter-date-from');
+  const filterDateTo = document.getElementById('filter-date-to');
+  const filterClearDates = document.getElementById('filter-clear-dates');
+  let selectedCategory = 'todas';
+
+  function getFilterState() {
+    const statuses = new Set();
+    document.querySelectorAll('.filter-status-checkbox:checked').forEach(chk => {
+      statuses.add(chk.getAttribute('data-status'));
+    });
+    const from = parseDisplayDate(filterDateFrom?.value);
+    let to = parseDisplayDate(filterDateTo?.value);
+    if (to) to = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59, 999);
+    return { statuses, category: selectedCategory, dateFrom: from, dateTo: to };
+  }
+
+  function inDateRange(date, from, to) {
+    if (!from && !to) return true;
+    if (!date) return true;
+    const t = date.getTime();
+    if (from && t < from.getTime()) return false;
+    if (to && t > to.getTime()) return false;
+    return true;
+  }
+
+  function itemMatchesFilters(kind, data, state) {
+    if (kind === 'missao') {
+      if (!state.statuses.has(missionStatusKey(data.status))) return false;
+      if (state.category !== 'todas' && categoriaKey(data.categoria) !== state.category) return false;
+      if (!inDateRange(parseDisplayDate(data.prazo), state.dateFrom, state.dateTo)) return false;
+    } else if (kind === 'mutirao') {
+      if (!inDateRange(parseDisplayDate(data.dataHora), state.dateFrom, state.dateTo)) return false;
+    } else if (kind === 'memoria') {
+      if (!inDateRange(parseDisplayDate(data.data), state.dateFrom, state.dateTo)) return false;
+    } else if (kind === 'marcador') {
+      if (state.category !== 'todas' && data.categoria && categoriaKey(data.categoria) !== state.category) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function applyFilters() {
+    const state = getFilterState();
+    if (filterClearDates) {
+      filterClearDates.classList.toggle('hidden', !state.dateFrom && !state.dateTo);
+    }
+
+    const groupByKind = {
+      missao: layerGroups.missoes,
+      mutirao: layerGroups.mutiroes,
+      memoria: layerGroups.memorias,
+      marcador: layerGroups.marcadores
+    };
+
+    let datedVisible = 0;
+    let datedTotal = 0;
+
+    mapItems.forEach(entry => {
+      const group = groupByKind[entry.kind];
+      if (!group) return;
+      const visible = itemMatchesFilters(entry.kind, entry.data, state);
+      if (visible) {
+        if (!group.hasLayer(entry.marker)) group.addLayer(entry.marker);
+      } else if (group.hasLayer(entry.marker)) {
+        group.removeLayer(entry.marker);
+      }
+      if (entry.kind === 'missao' || entry.kind === 'mutirao' || entry.kind === 'memoria') {
+        datedTotal += 1;
+        if (visible) datedVisible += 1;
+      }
+    });
+
+    if (
+      filtersReady
+      && (state.dateFrom || state.dateTo)
+      && datedTotal > 0
+      && datedVisible === 0
+    ) {
+      const key = `${filterDateFrom?.value || ''}|${filterDateTo?.value || ''}`;
+      if (key !== lastEmptyPeriodToast) {
+        lastEmptyPeriodToast = key;
+        showToast('Nada neste período. Tente outras datas.');
+      }
+    } else if (datedVisible > 0) {
+      lastEmptyPeriodToast = '';
+    }
+  }
 
   if (filterTrigger && filterMenu) {
     filterTrigger.addEventListener('click', (e) => {
@@ -1476,12 +1878,31 @@ document.addEventListener('DOMContentLoaded', () => {
       opt.addEventListener('click', () => {
         filterMenu.querySelectorAll('.filter-option').forEach(o => o.classList.remove('selected'));
         opt.classList.add('selected');
+        selectedCategory = opt.getAttribute('data-value') || 'todas';
         if (filterLabel) filterLabel.textContent = opt.textContent.trim();
         filterMenu.classList.add('hidden');
         filterTrigger.setAttribute('aria-expanded', 'false');
+        applyFilters();
       });
     });
   }
+
+  document.querySelectorAll('.filter-status-checkbox').forEach(chk => {
+    chk.addEventListener('change', applyFilters);
+  });
+  if (filterDateFrom) filterDateFrom.addEventListener('change', applyFilters);
+  if (filterDateTo) filterDateTo.addEventListener('change', applyFilters);
+  if (filterClearDates) {
+    filterClearDates.addEventListener('click', () => {
+      if (filterDateFrom) filterDateFrom.value = '';
+      if (filterDateTo) filterDateTo.value = '';
+      lastEmptyPeriodToast = '';
+      applyFilters();
+    });
+  }
+
+  applyFilters();
+  filtersReady = true;
 
   // 6. MODAL DE CRIAÇÃO (+ Novo Elemento)
   const creationModal = document.getElementById('creation-modal');
@@ -1710,36 +2131,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const descInput = document.getElementById('input-descricao-missao').value || 'Ação comunitária para melhoria local.';
         const catInput = document.getElementById('select-categoria-missao').value;
         const prazoInput = document.getElementById('input-prazo-missao').value;
+        const newData = {
+          id: newFeatureId('m'),
+          lat: center.lat,
+          lng: center.lng,
+          titulo: titleInput,
+          descricao: descInput,
+          status: 'Em andamento',
+          prazo: prazoInput,
+          categoria: categoriaKey(catInput),
+          categoriaLabel: catInput,
+          vinculo: vinculoForma,
+          memorias: [],
+          tipo: 'missao'
+        };
 
         const newIcon = createCustomIcon(
           typeBadge('missao'),
           titleInput
         );
 
-        const newPopup = `
-          <div class="context-card">
-            <div class="card-header-badge">
-              <span class="card-type-tag missao">Missão</span>
-              <span class="card-status">Ativa</span>
-            </div>
-            <h3 class="card-title">${titleInput}</h3>
-            <p style="font-size: 0.82rem; color: #475569; margin: 4px 0 10px;">${descInput}</p>
-            <div class="card-meta">
-              <div class="card-meta-item">🏷️ Categoria: <strong>${catInput}</strong></div>
-              <div class="card-meta-item">📅 Prazo: <strong>${prazoInput}</strong></div>
-              <div class="card-meta-item">👥 Participantes: <strong>1 participante (Você)</strong></div>
-            </div>
-            ${vinculoShapeHtml(vinculoForma)}
-            <div class="card-action-group">
-              <button class="card-btn card-btn-primary" onclick="showToast('Detalhes da missão!')">Ver missão</button>
-              ${memoryActionHtml('missao', titleInput, center.lat, center.lng)}
-            </div>
-          </div>
-        `;
-
-        L.marker([center.lat, center.lng], { icon: newIcon })
-          .bindPopup(newPopup)
+        const marker = L.marker([center.lat, center.lng], { icon: newIcon })
+          .bindPopup(buildParentCardHtml('missao', newData), POPUP_OPTS)
           .addTo(layerGroups.missoes);
+        registerMapItem('missao', newData, marker);
+        applyFilters();
 
         showToast(`Missão "${titleInput}" criada no ponto escolhido.`);
 
@@ -1751,8 +2167,17 @@ document.addEventListener('DOMContentLoaded', () => {
           mutiraoTitle
         );
 
+        const newData = {
+          id: newFeatureId('mu'),
+          lat: center.lat,
+          lng: center.lng,
+          titulo: mutiraoTitle,
+          dataHora: formatMemoryDate(new Date().toISOString().slice(0, 10)),
+          tipo: 'mutirao'
+        };
+
         const newPopup = `
-          <div class="context-card">
+          <div class="context-card context-card-simple">
             <div class="card-header-badge">
               <span class="card-type-tag mutirao">Mutirão Vinculado</span>
               <span class="card-status">Confirmado</span>
@@ -1766,33 +2191,32 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
 
-        L.marker([center.lat, center.lng], { icon: newIcon })
-          .bindPopup(newPopup)
+        const marker = L.marker([center.lat, center.lng], { icon: newIcon })
+          .bindPopup(newPopup, POPUP_OPTS)
           .addTo(layerGroups.mutiroes);
+        registerMapItem('mutirao', newData, marker);
+        applyFilters();
 
         showToast(`"${mutiraoTitle}" vinculado no ponto escolhido.`);
 
       } else if (currentActiveTab === 'memoria') {
         const memoriaTitle = document.getElementById('input-titulo-memoria').value || 'Memória Fotográfica';
         const memoriaData = document.getElementById('input-data-memoria').value;
-        const memoriaVinculo = document.getElementById('select-vinculo-memoria').value;
-        const parentKind = memoryParent?.kind || 'missao';
-        const parentName = memoryParent?.titulo || memoriaVinculo;
-        if (!parentName) {
+        const parentKind = memoryParent?.kind;
+        const parentId = memoryParent?.id;
+        const parentEntry = parentId ? parentById.get(parentId) : null;
+        if (!parentEntry) {
           showToast('Escolha a missão ou o marcador ligado a esta memória.');
           return;
         }
         const photoSrc = loadedMemoriaPhoto || 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400&q=80';
+        const parentName = parentEntry.data.titulo;
         const vinculoFrase = parentKind === 'marcador'
           ? `Ligada ao marcador ${parentName}.`
           : `Ligada à missão ${parentName}.`;
 
-        const newIcon = createCustomIcon(
-          typeBadge('memoria'),
-          memoriaTitle
-        );
-
         const newMemoria = {
+          id: newFeatureId('mem'),
           titulo: memoriaTitle,
           autor: 'Amanda',
           data: memoriaData,
@@ -1802,12 +2226,9 @@ document.addEventListener('DOMContentLoaded', () => {
           comentarios: []
         };
 
-        L.marker([center.lat, center.lng], { icon: newIcon })
-          .on('click', () => {
-            if (mapTool !== 'select') return;
-            openMemoryModal(newMemoria);
-          })
-          .addTo(layerGroups.memorias);
+        if (!parentEntry.data.memorias) parentEntry.data.memorias = [];
+        parentEntry.data.memorias.push(newMemoria);
+        refreshParentPopup(parentId, 'memorias');
 
         showToast(`Memória ligada ${parentKind === 'marcador' ? 'ao marcador' : 'à missão'} ${parentName}.`);
 
@@ -1819,33 +2240,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const badgeClass = tipoMarcador === 'alerta' ? 'alerta' : 'marcador';
         const tagTitle = tipoMarcador === 'alerta' ? 'Alerta Comunitário' : 'Ponto de Interesse';
+        const newData = {
+          id: newFeatureId('mar'),
+          lat: center.lat,
+          lng: center.lng,
+          titulo: marcadorTitle,
+          descricao: marcadorDesc,
+          status: 'Ativo',
+          categoria: categoriaKey(marcadorCat),
+          categoriaLabel: marcadorCat,
+          badgeClass,
+          tagTitle,
+          vinculo: vinculoForma,
+          memorias: [],
+          tipo: 'marcador'
+        };
 
         const newIcon = createCustomIcon(
           typeBadge(badgeClass),
           marcadorTitle
         );
 
-        const newPopup = `
-          <div class="context-card">
-            <div class="card-header-badge">
-              <span class="card-type-tag ${badgeClass}">${tagTitle}</span>
-              <span class="card-status">Ativo</span>
-            </div>
-            <h3 class="card-title">${marcadorTitle}</h3>
-            <p style="font-size: 0.82rem; color: #475569; margin: 4px 0 10px;">${marcadorDesc}</p>
-            <div class="card-meta">
-              <div class="card-meta-item">Categoria: <strong>${marcadorCat}</strong></div>
-            </div>
-            ${vinculoShapeHtml(vinculoForma)}
-            <div class="card-action-group">
-              ${memoryActionHtml('marcador', marcadorTitle, center.lat, center.lng)}
-            </div>
-          </div>
-        `;
-
-        L.marker([center.lat, center.lng], { icon: newIcon })
-          .bindPopup(newPopup)
+        const marker = L.marker([center.lat, center.lng], { icon: newIcon })
+          .bindPopup(buildParentCardHtml('marcador', newData), POPUP_OPTS)
           .addTo(layerGroups.marcadores);
+        registerMapItem('marcador', newData, marker);
+        applyFilters();
 
         showToast(`Marcador "${marcadorTitle}" adicionado no ponto escolhido.`);
       }
@@ -1861,18 +2281,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  window.openCreateMemoryFor = function(kind, titulo, lat, lng) {
+  window.openCreateMemoryFor = function(kind, id) {
+    const parent = parentById.get(id);
+    if (!parent) return;
     map.closePopup();
     placeState.type = 'memoria';
     placeState.source = 'parent';
-    placeState.parent = { kind, titulo };
+    placeState.parent = { kind, id, titulo: parent.data.titulo };
     placeState.shape = null;
     placeState.pickingInside = false;
-    placeState.latlng = L.latLng(lat, lng);
+    placeState.latlng = parent.marker.getLatLng();
     if (modalTitleEl) modalTitleEl.textContent = 'Nova memória';
     if (modalTabsEl) modalTabsEl.classList.add('hidden');
     setActiveTab('memoria');
-    setMemoryVinculo(kind, titulo);
+    setMemoryVinculo(kind, parent.data.titulo);
     openModal();
   };
 
