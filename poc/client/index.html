@@ -119,27 +119,6 @@
             </li>
           </ul>
         </div>
-
-        <!-- Footer da Sidebar: Card de XP & Perfil -->
-        <div class="sidebar-footer">
-          <div class="level-card">
-            <div class="level-info">
-              <span class="level-title">Nível 3 · Guardiã</span>
-              <span class="level-xp">720/1000</span>
-            </div>
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill"></div>
-            </div>
-          </div>
-
-          <div class="user-profile">
-            <div class="avatar">AW</div>
-            <div class="user-details">
-              <span class="user-name">Amanda W.</span>
-              <span class="user-location">Bacia do Rio Doce</span>
-            </div>
-          </div>
-        </div>
       </aside>
 
       <!-- =========================================================================
@@ -169,12 +148,141 @@
             />
           </div>
 
-          <button class="btn-icon notification-btn" title="Notificações">
-            <span class="ds-icon ds-icon-20">
-              <img src="./icons/bell.svg" alt="" width="20" height="20" />
-            </span>
-            <span class="notification-badge"></span>
-          </button>
+          <div class="top-bar-end">
+            <button class="btn-icon notification-btn" title="Notificações">
+              <span class="ds-icon ds-icon-20">
+                <img src="./icons/bell.svg" alt="" width="20" height="20" />
+              </span>
+              <span class="notification-badge"></span>
+            </button>
+
+            <div class="profile-cluster">
+              <button
+                type="button"
+                class="user-profile"
+                id="btn-profile"
+                title="Perfil"
+                aria-expanded="false"
+                aria-controls="profile-menu"
+              >
+                <img
+                  class="avatar-photo"
+                  src="./icons/profile/amanda-waller.png"
+                  alt=""
+                  width="36"
+                  height="36"
+                />
+                <div class="user-details">
+                  <span class="user-name">Amanda Waller</span>
+                  <span class="user-location">Nível 12</span>
+                </div>
+              </button>
+
+              <div class="profile-menu hidden" id="profile-menu" role="menu" aria-label="Perfil">
+                <div class="profile-menu-identity">
+                  <img
+                    class="avatar-photo avatar-photo-lg"
+                    src="./icons/profile/amanda-waller.png"
+                    alt=""
+                    width="48"
+                    height="48"
+                  />
+                  <div class="profile-menu-identity-copy">
+                    <p class="user-name">Amanda Waller</p>
+                    <div class="profile-level-row">
+                      <span class="level-badge">12</span>
+                      <span>Nível</span>
+                      <span class="level-xp">2450/3000 XP</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                      <div class="progress-bar-fill"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="button" class="profile-menu-link" role="menuitem">
+                  <span class="profile-icon-tile">
+                    <span class="ds-icon" style="width: 20px; height: 20px">
+                      <img src="./icons/profile/network.svg" alt="" width="20" height="20" />
+                    </span>
+                  </span>
+                  <span>Minha rede</span>
+                  <span class="ds-icon profile-menu-chevron" style="width: 14px; height: 14px">
+                    <img src="./icons/profile/chevron-right.svg" alt="" width="14" height="14" />
+                  </span>
+                </button>
+
+                <div class="profile-menu-block">
+                  <h3 class="profile-menu-heading">Organizações</h3>
+                  <div class="profile-empty">
+                    <span class="profile-icon-tile profile-icon-tile-lg">
+                      <span class="ds-icon" style="width: 22px; height: 22px">
+                        <img src="./icons/profile/organization.svg" alt="" width="22" height="22" />
+                      </span>
+                    </span>
+                    <p class="profile-empty-title">Nenhuma organização</p>
+                    <p class="profile-empty-text">Crie ou entre em uma para começar.</p>
+                    <button type="button" class="card-btn card-btn-primary profile-empty-btn">
+                      <span class="ds-icon ds-icon-14">
+                        <img src="./icons/plus.svg" alt="" width="14" height="14" />
+                      </span>
+                      Adicionar organização
+                    </button>
+                  </div>
+                </div>
+
+                <div class="profile-menu-block">
+                  <h3 class="profile-menu-heading">Minha jornada</h3>
+                  <ul class="profile-stats">
+                    <li class="profile-stat">
+                      <span class="profile-icon-tile">
+                        <span class="ds-icon" style="width: 22px; height: 22px">
+                          <img src="./icons/profile/saberes.svg" alt="" width="22" height="22" />
+                        </span>
+                      </span>
+                      <span class="profile-stat-copy">
+                        <span class="profile-stat-label">Saberes</span>
+                        <span class="profile-stat-value">12 conquistados</span>
+                      </span>
+                    </li>
+                    <li class="profile-stat">
+                      <span class="profile-icon-tile">
+                        <span class="ds-icon" style="width: 22px; height: 22px">
+                          <img src="./icons/profile/certificados.svg" alt="" width="22" height="22" />
+                        </span>
+                      </span>
+                      <span class="profile-stat-copy">
+                        <span class="profile-stat-label">Certificados</span>
+                        <span class="profile-stat-value">3 completos</span>
+                      </span>
+                    </li>
+                    <li class="profile-stat">
+                      <span class="profile-icon-tile">
+                        <span class="ds-icon" style="width: 22px; height: 22px">
+                          <img src="./icons/profile/horas.svg" alt="" width="22" height="22" />
+                        </span>
+                      </span>
+                      <span class="profile-stat-copy">
+                        <span class="profile-stat-label">Horas de aprendizado</span>
+                        <span class="profile-stat-value">48 horas</span>
+                      </span>
+                    </li>
+                    <li class="profile-stat">
+                      <span class="profile-icon-tile">
+                        <span class="ds-icon" style="width: 22px; height: 22px">
+                          <img src="./icons/profile/manuais.svg" alt="" width="22" height="22" />
+                        </span>
+                      </span>
+                      <span class="profile-stat-copy">
+                        <span class="profile-stat-label">Manuais</span>
+                        <span class="profile-stat-value">48 completos</span>
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         </header>
 
         <!-- Container do Mapa -->
@@ -574,6 +682,23 @@
                   </button>
                 </li>
               </ul>
+            </div>
+            <div class="filter-date-section">
+              <p class="filter-section-label">Período</p>
+              <div class="filter-date-row">
+                <label class="filter-date-field" for="filter-date-from">
+                  <span>De</span>
+                  <input type="date" id="filter-date-from" class="filter-date-input" />
+                </label>
+                <label class="filter-date-field" for="filter-date-to">
+                  <span>Até</span>
+                  <input type="date" id="filter-date-to" class="filter-date-input" />
+                </label>
+              </div>
+              <p class="filter-date-help">Mostra o que aconteceu neste intervalo.</p>
+              <button type="button" class="filter-clear-dates hidden" id="filter-clear-dates">
+                Limpar período
+              </button>
             </div>
           </div>
 
