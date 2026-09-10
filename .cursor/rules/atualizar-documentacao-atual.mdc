@@ -1,0 +1,23 @@
+---
+description: Manter docs/DOCUMENTACAO_ATUAL.md alinhada ao código e mover itens concluídos para fora da lista de pendências
+alwaysApply: true
+---
+
+# Documentação do mapa
+
+A fonte de verdade do **produto como está hoje** é `docs/DOCUMENTACAO_ATUAL.md`.
+O plano ainda não implementado fica em `docs/FUNCIONALIDADES_PENDENTES.md`.
+Não trate `Documentacao_Regras_de_Negocio_Mapa.md` como estado atual.
+
+## Quando atualizar
+
+Na mesma entrega em que o código mudar:
+
+1. Atualize `docs/DOCUMENTACAO_ATUAL.md` (o que o usuário passa a poder fazer, o que deixou de existir, stack, limites).
+2. Se a mudança entregar um item de `docs/FUNCIONALIDADES_PENDENTES.md`, remova esse tópico de lá.
+3. Não invente na documentação atual recursos que só existem no plano antigo.
+
+## O que não fazer
+
+- Não reescrever a documentação antiga de regras de negócio no lugar destes dois arquivos.
+- Não deixar a documentação atual descrever a POC Leaflet e a stack React/API como se fossem a mesma tela, a menos que sejam integradas.
