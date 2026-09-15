@@ -1,12 +1,12 @@
 # Figital — Regras de Negócio, Casos de Uso e Especificação Técnica
 
 **Plataforma:** Território (territorio.ai)
-**Tipo:** Interações físico-digitais **sobre o mapa do território**
-**Versão do documento:** 2.0
+**Tipo:** Interações físico-digitais sobre o mapa do território
+**Versão do documento:** 2.1
 **Data:** 14/09/2026
-**Escopo:** Produto planejado — **não** descreve o estado atual da POC
+**Escopo:** Produto planejado — não descreve o estado atual da POC
 
-> A interface que existe hoje está em [`DOCUMENTACAO_ATUAL.md`](DOCUMENTACAO_ATUAL.md). Este arquivo é o plano do **Figital**: o mapa do território **já é** o Figital; polígonos, trilhas e waypoints ganham missões e totens (marcadores com QR). Não trate `Documentacao_Regras_de_Negocio_Mapa.md` nem este arquivo como estado atual.
+> A interface que existe hoje está em [`DOCUMENTACAO_ATUAL.md`](DOCUMENTACAO_ATUAL.md). Este arquivo descreve como o Figital opera no mapa: geometria, totens, jornada no campo e divisão entre **mapa** (autoria) e **aplicativo** (participação). Não trate `Documentacao_Regras_de_Negocio_Mapa.md` nem este arquivo como estado atual.
 
 ---
 
@@ -42,9 +42,9 @@
 
 ## 1. Como funciona
 
-O mapa do território **já é** o Figital. Não há uma entidade “campanha” à parte, nem um botão para “iniciar campanha”. A instituição **cria o mapa**, **demarca** polígonos, trilhas e waypoints e, **dentro deles**, acrescenta interações: missões e totens (marcadores com QR). A pessoa **participa** no campo: chega a um totem, escaneia o QR, conversa com o NPC, cumpre missões e deixa insumos. Os insumos voltam para a instituição como acervo e evidência da ação comunitária.
+No Território, o Figital acontece **no mapa**. A instituição cria o mapa do território, demarca polígonos, trilhas e waypoints e, **dentro dessa geometria**, coloca as interações de campo: missões e totens (marcadores com QR). A pessoa participa no território: chega a um totem, escaneia o QR, conversa com o NPC, cumpre missões e deixa insumos. Esses insumos voltam para a instituição como acervo e evidência da ação comunitária.
 
-Duas superfícies, um contrato: o **mapa** (autoria da geometria e das interações) e o **aplicativo** (jornada presencial).
+São duas superfícies com o mesmo conteúdo. No **mapa web**, a instituição desenha e configura. No **aplicativo**, a pessoa percorre a trilha.
 
 ```mermaid
 flowchart TD
@@ -57,14 +57,14 @@ flowchart TD
 
 ### 1.1. O que o Figital usa do mapa
 
-O Figital **não substitui** missões, mutirões, memórias, linhas e polígonos. Ele **usa** o que o mapa já tem e acrescenta presença no campo:
+Missões, mutirões, memórias, linhas e polígonos continuam como estão. O Figital aproveita esses elementos e acrescenta a jornada presencial:
 
-| Já previsto no mapa | O que o Figital acrescenta |
-|---------------------|----------------------------|
-| Mapa (repositório, visibilidade) | O próprio Figital — não há objeto Campanha separado |
-| Polígono / trilha (linha) | Percurso: unidade da jornada, recompensa final e modo de progresso |
-| Missão com localização | Missão de totem, com NPC, ordem e insumo configurável |
-| Marcador | Totem: o mesmo marcador, com QR, papel e roteiro do NPC |
+| No mapa | No Figital |
+|---------|------------|
+| Mapa (repositório, visibilidade público/privado) | Onde a instituição organiza o território e quem pode ver ou participar |
+| Polígono / trilha (linha) | Percurso: a trilha ou área pela qual a pessoa caminha, com progresso e recompensa final |
+| Missão com localização | Missão de totem, com NPC, ordem e insumos configuráveis |
+| Marcador | Totem: o mesmo marcador, com QR, papel na trilha e roteiro do NPC |
 | Memória | Um dos tipos possíveis de insumo |
 | Estrelas / insígnias (planejadas) | Recompensa parcial por totem e recompensa final do percurso |
 
@@ -96,13 +96,13 @@ flowchart LR
 
 | Papel | Onde atua | Descrição |
 |-------|-----------|-----------|
-| **Organizador** | Mapa | Pessoa ou organização dona do mapa (Owner) ou Editor. Desenha geometria, posiciona totens, lê insumos. |
-| **Operador de campo** | Mapa (leitura) e território físico | Instala totens e testa QRs; não altera a geometria nem as regras do percurso salvo permissão de Editor. |
-| **Participante** | Aplicativo | Pessoa na trilha. Não precisa ser colaboradora do mapa. Inicia jornada no QR do totem de entrada daquele percurso. |
-| **NPC** | Aplicativo | Persona guiada (texto, áudio ou avatar). Não é um usuário. Explica missões, recompensas e o próximo passo. |
+| **Organizador** | Mapa | Owner ou Editor do mapa. Desenha a geometria, posiciona totens, lê os insumos. |
+| **Operador de campo** | Mapa (leitura) e território físico | Instala totens e testa QRs. Só altera geometria ou regras do percurso se também for Editor. |
+| **Participante** | Aplicativo | Pessoa na trilha. Não precisa ser colaboradora do mapa. Começa a jornada no QR do totem de entrada daquele percurso. |
+| **NPC** | Aplicativo | Persona guiada (texto, áudio ou avatar). Não é um usuário. Explica a missão, a recompensa e o próximo passo. |
 
 > [!IMPORTANT]
-> **Colaborador do mapa ≠ participante da jornada.** Quem edita o território no mapa não é, por isso, quem caminha a trilha. Quem caminha a trilha não ganha permissão de editar o mapa.
+> Quem edita o mapa não é, automaticamente, quem caminha a trilha. Quem caminha a trilha não ganha permissão de editar o mapa.
 
 ---
 
@@ -110,39 +110,39 @@ flowchart LR
 
 ### 3.1. Mapa do território
 
-O **mapa** é o repositório: nome, visibilidade (público/privado, no produto planejado), geometria e interações. **É o Figital.** Quem vê o mapa vê (conforme permissão) as trilhas, os totens e as missões.
+O mapa guarda o nome, a visibilidade (público ou privado, no produto planejado), a geometria e as interações. Quem tem acesso ao mapa vê, conforme a permissão, as trilhas, os totens e as missões.
 
-Não há ciclo de status próprio de “campanha”. A visibilidade e o arquivamento são os do **mapa**. Um percurso (trilha/área com totens) pode ainda ser marcado **ativo** ou **inativo** sem arquivar o mapa inteiro ([RN-FIG-007](#61-mapa-geometria-e-percurso)).
+A visibilidade e o arquivamento são do mapa. Um percurso (trilha ou área com totens) pode ficar **ativo** ou **inativo** sem arquivar o mapa inteiro ([RN-FIG-007](#61-mapa-geometria-e-percurso)).
 
 ### 3.2. Geometria
 
-Polígono, linha (trilha) e waypoint já desenháveis no mapa. Interações Figital (missões e totens) ficam **dentro** dessa geometria (ou sobre a linha, no caso de trilha).
+Polígono, linha (trilha) e waypoint desenháveis no mapa. Missões e totens ficam **dentro** dessa geometria — ou sobre a linha, no caso de trilha.
 
 ### 3.3. Percurso (trilha ou área com totens)
 
-Unidade da jornada do participante. É a geometria (polígono ou trilha) **depois** de receber totens. Tem modo de progresso (`sequencial` ou `livre`), recompensa final, texto de consentimento dos insumos daquele percurso e, opcionalmente, período (início e fim).
+É a unidade da jornada. Quando uma trilha ou um polígono recebe totens, vira um percurso: tem modo de progresso (`sequencial` ou `livre`), recompensa final, texto de consentimento dos insumos e, se a instituição quiser, um período (início e fim).
 
-A jornada **não** é do mapa inteiro: se o mapa tiver a Serra do Vulcão e outra trilha, cada uma é um percurso.
+Se o mesmo mapa tiver a Serra do Vulcão e outra trilha, cada uma é um percurso. A pessoa caminha um percurso de cada vez.
 
 ### 3.4. Totem
 
-**Marcador** do mapa com campos Figital. Não é um tipo novo de elemento. Cada totem tem:
+Marcador do mapa com os campos da jornada de campo. Cada totem tem:
 
-- Coordenada no mapa (as mesmas regras de posicionamento do marcador)
+- Coordenada (as mesmas regras de posicionamento do marcador)
 - Papel: `inicio`, `intermediario` ou `fim`
 - QR (URL profunda do app)
 - Missão associada (obrigatória nos intermediários e no fim; o de início pode só abrir a jornada)
 - Roteiro do NPC naquele ponto
 
-O totem fica **na trilha, na área ou ligado a uma missão** daquela geometria.
+O totem fica na trilha, na área ou ligado a uma missão daquela geometria.
 
 ### 3.5. Missão de totem
 
-Missão do mapa **especializada** para o Figital: instrução do NPC, ordem, recompensa parcial e **catálogo de insumos** (quais evidências o participante deve entregar). Uma missão pode exigir um ou mais tipos de insumo.
+Missão do mapa com os campos da jornada: instrução do NPC, ordem, recompensa parcial e **catálogo de insumos** (quais evidências a pessoa deve entregar). Uma missão pode pedir um ou mais tipos de insumo.
 
 ### 3.6. Jornada
 
-Sessão de um participante num **percurso**, criada no scan do totem de **início** daquela trilha/área. Guarda progresso, rascunhos offline e recompensas já liberadas.
+Sessão de um participante num percurso, criada no scan do totem de **início** daquela trilha ou área. Guarda progresso, rascunhos offline e recompensas já liberadas.
 
 Status da jornada:
 
@@ -154,24 +154,24 @@ INICIADA ──► EM_ANDAMENTO ──► CONCLUIDA
 
 ### 3.7. Recompensa
 
-- **Parcial:** por missão/totem concluído (insígnia pequena, XP, item de coleção).
-- **Final:** só com todas as missões **obrigatórias** daquele **percurso** concluídas. Não é substituída pelo conjunto das parciais.
+- **Parcial:** ao concluir a missão daquele totem (insígnia pequena, XP, item de coleção).
+- **Final:** ao concluir todas as missões **obrigatórias** daquele percurso. As parciais não substituem a final.
 
 ### 3.8. Insumo
 
-Evidência que o participante gera na missão. Os tipos **não são fixos no percurso**: cada missão escolhe no catálogo (foto, vídeo, áudio, texto, GPS/check-in, formulário, memória no mapa). Ver [§15](#15-schema-de-insumos).
+Evidência gerada na missão. Os tipos não são iguais em todo o percurso: cada missão escolhe no catálogo (foto, vídeo, áudio, texto, GPS/check-in, formulário, memória no mapa). Ver [§15](#15-schema-de-insumos).
 
 ---
 
 ## 4. Como adicionar interações Figital
 
-Esta seção responde à pergunta prática: *quero a Serra do Vulcão no mapa, com totens e QR — como faço?* A resposta: **desenha a geometria e usa o “+” da forma**, o mesmo fluxo que o mapa já tem para colocar missão ou marcador dentro da área.
+Pergunta prática: *quero a Serra do Vulcão no mapa, com totens e QR — como faço?* Desenha a geometria e usa o **“+” da forma**, o mesmo fluxo que o mapa já tem para colocar missão ou marcador dentro da área.
 
 ### 4.1. Onde fica o gatilho
 
-Hoje, ao selecionar um polígono ou trilha, o mapa mostra as **ações da forma** no canto (adicionar dentro, editar, excluir — ver [`poc/client/index.html`](../poc/client/index.html), bloco `shape-actions`). O Figital **reusa esse “+”**: além de missão e marcador, o organizador posiciona **totem** (marcador com QR) **somente dentro** da geometria.
+Ao selecionar um polígono ou uma trilha, o mapa mostra as ações da forma no canto (adicionar dentro, editar, excluir — ver [`poc/client/index.html`](../poc/client/index.html), bloco `shape-actions`). O Figital usa esse **“+”**: além de missão e marcador, o organizador posiciona **totem** (marcador com QR), sempre **dentro** da geometria.
 
-Não há ação “Iniciar campanha”. A trilha/área **já é** o percurso no momento em que o primeiro totem entra. O totem com papel `inicio` marca onde a jornada do participante começa.
+A trilha ou área vira percurso quando o primeiro totem entra. O totem com papel `inicio` é o ponto em que a jornada do participante começa.
 
 ### 4.2. Caminho — geometria primeiro (o da Serra do Vulcão)
 
@@ -185,20 +185,20 @@ flowchart TD
   desenha --> seleciona --> mais --> totens --> visib
 ```
 
-1. Owner/Editor **desenha** o polígono ou a trilha **Serra do Vulcão** (ou seleciona uma geometria já existente).
-2. Nas ações da forma, o **“+”** oferece **Missão** e **Totem** (marcador Figital), sempre **dentro** da geometria.
-3. O primeiro totem com papel `inicio` define o começo da jornada daquele percurso; intermediários e fim vêm na sequência.
+1. Owner ou Editor desenha o polígono ou a trilha **Serra do Vulcão** (ou seleciona uma geometria que já existe).
+2. Nas ações da forma, o **“+”** oferece **Missão** e **Totem**, sempre dentro da geometria.
+3. O totem com papel `inicio` marca o começo da jornada; intermediários e fim vêm na sequência.
 4. Em cada totem: missão, insumos, roteiro do NPC, recompensa parcial.
-5. No percurso: modo de progresso, recompensa final, texto de consentimento (se ainda não houver).
-6. Gera as artes de QR. Quem vê e quem pode iniciar jornada depende da **visibilidade do mapa** (e de o percurso estar ativo).
+5. No percurso: modo de progresso, recompensa final, texto de consentimento.
+6. Gera as artes de QR. Quem vê o mapa e quem pode iniciar a jornada depende da **visibilidade do mapa** e de o percurso estar ativo.
 
 ### 4.3. Totem ligado a uma missão
 
-O “+” também posiciona **missão** dentro da área, como hoje. Um totem pode ficar **sobre a trilha** ou **associado a uma missão** já criada naquela geometria. Os dois casos são o mesmo marcador Figital; muda só o vínculo.
+O “+” também posiciona missão dentro da área, como hoje. Um totem pode ficar sobre a trilha ou associado a uma missão já criada naquela geometria. Nos dois casos é o mesmo marcador; muda só o vínculo.
 
-### 4.4. Sem geometria ainda
+### 4.4. Se a geometria ainda não existe
 
-Se a Serra ainda não está no mapa: **Desenhar** polígono ou trilha → seguir o [§4.2](#42-caminho--geometria-primeiro-o-da-serra-do-vulcão). Não existe fluxo de “criar campanha e depois escolher a área”.
+Desenha o polígono ou a trilha e segue o [§4.2](#42-caminho--geometria-primeiro-o-da-serra-do-vulcão). A geometria vem primeiro; as interações entram nela.
 
 ---
 
@@ -206,21 +206,21 @@ Se a Serra ainda não está no mapa: **Desenhar** polígono ou trilha → seguir
 
 ### 5.1. Lado da instituição (mapa)
 
-1. Cria ou abre o **mapa do território**.
+1. Cria ou abre o mapa do território.
 2. Demarca a área ou a trilha (ex.: Serra do Vulcão).
-3. Pelo **“+” da forma**, posiciona totens **dentro** da geometria; define início, intermediários e fim.
+3. Pelo **“+” da forma**, posiciona totens dentro da geometria e define início, intermediários e fim.
 4. Em cada totem: missão, insumos, roteiro do NPC, recompensa parcial.
-5. Define, no percurso, o modo de progresso, a recompensa final e o texto de consentimento.
-6. Gera as artes de QR, instala os totens físicos. A visibilidade é a do **mapa**.
+5. No percurso: modo de progresso, recompensa final e texto de consentimento.
+6. Gera as artes de QR e instala os totens físicos. Quem participa depende da visibilidade do mapa.
 
 ### 5.2. Lado da pessoa (aplicativo)
 
 1. Chega ao totem de início daquele percurso e escaneia o QR.
-2. Aceita o consentimento dos insumos (se ainda não tiver neste **mapa**).
-3. O NPC apresenta a trilha, as missões e a recompensa final **daquele percurso**.
+2. Aceita o consentimento dos insumos, se ainda não tiver aceito neste mapa.
+3. O NPC apresenta a trilha, as missões e a recompensa final daquele percurso.
 4. Em cada totem seguinte: scan (QR obrigatório), NPC daquele ponto, execução da missão, envio do insumo, recompensa parcial.
 5. No totem de fim (ou ao completar a última missão obrigatória do percurso): recompensa final.
-6. Os insumos ficam disponíveis para a instituição no painel do mapa / daquele percurso.
+6. Os insumos ficam no painel do mapa / daquele percurso, para a instituição.
 
 ---
 
@@ -230,16 +230,16 @@ Se a Serra ainda não está no mapa: **Desenhar** polígono ou trilha → seguir
 
 | Regra | Descrição |
 |-------|-----------|
-| **RN-FIG-001** | O mapa do território **é** o Figital. **Não existe** entidade Campanha separada do mapa |
-| **RN-FIG-002** | Interações Figital (missões e totens) pertencem a **exatamente uma geometria** (polígono ou trilha) daquele mapa |
+| **RN-FIG-001** | Interações Figital (missões e totens) vivem **no mapa do território**: a instituição desenha a geometria e coloca as interações dentro dela |
+| **RN-FIG-002** | Cada missão ou totem Figital pertence a **exatamente uma geometria** (polígono ou trilha) daquele mapa |
 | **RN-FIG-003** | Só **Owner** e **Editor** do mapa criam, editam ou desativam geometria e interações Figital |
-| **RN-FIG-004** | Um percurso tem obrigatoriamente **geometria** e **modo de progresso**; período, recompensa final e texto de consentimento são opcionais até o primeiro totem `inicio` receber jornada |
-| **RN-FIG-005** | Totem **é** um **marcador** do mapa com campos Figital: QR, papel (`inicio` / `intermediario` / `fim`), missão e roteiro do NPC |
-| **RN-FIG-006** | Em mapa **privado** ou percurso **inativo**, o participante não inicia jornada; QRs, se testados, só funcionam para Owner/Editor |
+| **RN-FIG-004** | Um percurso tem obrigatoriamente **geometria** e **modo de progresso**. Período, recompensa final e texto de consentimento podem ser preenchidos até o primeiro totem `inicio` receber jornada |
+| **RN-FIG-005** | Totem é um **marcador** do mapa com QR, papel (`inicio` / `intermediario` / `fim`), missão e roteiro do NPC |
+| **RN-FIG-006** | Em mapa **privado** ou percurso **inativo**, o participante não inicia jornada; QRs de teste só funcionam para Owner/Editor |
 | **RN-FIG-007** | Mapa **arquivado** ou percurso **inativo** não inicia jornada nova; jornadas em andamento passam a `ABANDONADA` |
-| **RN-FIG-008** | Um mapa pode ter **vários** percursos (várias trilhas/áreas com totens). A jornada é **por percurso**, não pelo mapa inteiro |
-| **RN-FIG-041** | Totens entram pelo **“+” da área/trilha** (dentro da geometria), não pelo “Novo marcador” solto no mapa — evita totem fora do território |
-| **RN-FIG-042** | Jornada, modo de progresso, recompensa final e consentimento **daquele percurso** pertencem à **trilha/área** que contém os totens |
+| **RN-FIG-008** | Um mapa pode ter **vários** percursos. A jornada é **por percurso** |
+| **RN-FIG-041** | Totens entram pelo **“+” da área/trilha**, dentro da geometria — não pelo “Novo marcador” solto no mapa, para não cair fora do território |
+| **RN-FIG-042** | Jornada, modo de progresso, recompensa final e consentimento daquele percurso pertencem à **trilha ou área** que contém os totens |
 
 ### 6.2. Totens e QR
 
@@ -247,9 +247,9 @@ Se a Serra ainda não está no mapa: **Desenhar** polígono ou trilha → seguir
 |-------|-----------|
 | **RN-FIG-009** | Todo percurso com jornada tem **exatamente um** totem com papel `inicio` |
 | **RN-FIG-010** | Todo percurso com jornada tem **pelo menos um** totem que não seja só de início (intermediário e/ou fim) |
-| **RN-FIG-011** | Totens devem estar **dentro** da geometria do percurso (ou sobre a trilha, com tolerância de posicionamento) |
-| **RN-FIG-012** | Cada totem tem um QR único, apontando para URL profunda do app daquele **mapa**, daquele **percurso** e daquele totem |
-| **RN-FIG-013** | A jornada **só começa** no QR do totem `inicio` daquele percurso |
+| **RN-FIG-011** | Totens ficam **dentro** da geometria do percurso (ou sobre a trilha, com tolerância de posicionamento) |
+| **RN-FIG-012** | Cada totem tem um QR único, apontando para URL profunda do app daquele mapa, daquele percurso e daquele totem |
+| **RN-FIG-013** | A jornada começa no QR do totem `inicio` daquele percurso |
 | **RN-FIG-014** | QR de totem intermediário ou de fim **sem jornada** não executa missão: informa que é preciso começar no totem inicial (e, se o GPS permitir, indica a direção) |
 | **RN-FIG-015** | Check-in no totem exige **scan do QR**. GPS é validação **opcional** por missão (trilha com sinal fraco não pode bloquear o piloto) |
 | **RN-FIG-016** | QRs levam payload **assinado** para reduzir totens falsos (impressos por terceiros) |
@@ -258,9 +258,9 @@ Se a Serra ainda não está no mapa: **Desenhar** polígono ou trilha → seguir
 
 | Regra | Descrição |
 |-------|-----------|
-| **RN-FIG-017** | O modo de progresso é **sequencial** ou **livre**, definido no **percurso**. O exemplo Serra do Vulcão usa **sequencial** |
+| **RN-FIG-017** | O modo de progresso é **sequencial** ou **livre**, definido no percurso. O exemplo Serra do Vulcão usa **sequencial** |
 | **RN-FIG-018** | Em modo sequencial, a missão N só abre depois da missão N−1 **obrigatória** concluída |
-| **RN-FIG-019** | Missões podem ser marcadas como **obrigatórias** ou **opcionais**. Só as obrigatórias contam para a recompensa final do percurso |
+| **RN-FIG-019** | Missões podem ser **obrigatórias** ou **opcionais**. Só as obrigatórias contam para a recompensa final do percurso |
 | **RN-FIG-020** | Concluir uma missão exige entregar **todos** os insumos obrigatórios daquela missão, com a validação mínima de cada tipo |
 | **RN-FIG-021** | Uma missão de totem pertence a **exatamente um totem** |
 | **RN-FIG-022** | Owner/Editor podem alterar conteúdo de missão com o mapa visível; jornadas já passadas daquele totem **não são reabertas** |
@@ -270,8 +270,8 @@ Se a Serra ainda não está no mapa: **Desenhar** polígono ou trilha → seguir
 | Regra | Descrição |
 |-------|-----------|
 | **RN-FIG-023** | Um participante tem **no máximo uma jornada ativa** por percurso |
-| **RN-FIG-024** | Recomeçar o mesmo percurso (nova jornada) só é permitido se o percurso estiver ativo, o mapa permitir participação, a jornada anterior estiver `CONCLUIDA` ou `ABANDONADA` e o organizador **permitir replay** |
-| **RN-FIG-025** | Identidade do participante no piloto pode ser **conta Território** ou **jornada anônima** (ver [§18](#18-questões-em-aberto)). Anônimo ainda gera um identificador de dispositivo/sessão para progresso e anti-abuso |
+| **RN-FIG-024** | Recomeçar o mesmo percurso só é permitido se o percurso estiver ativo, o mapa permitir participação, a jornada anterior estiver `CONCLUIDA` ou `ABANDONADA` e o organizador **permitir replay** |
+| **RN-FIG-025** | No piloto, a identidade pode ser **conta Território** ou **jornada anônima** (ver [§18](#18-questões-em-aberto)). Anônimo ainda gera um identificador de dispositivo/sessão para progresso e anti-abuso |
 | **RN-FIG-026** | Sem rede, o app guarda rascunho local (progresso + insumos) e envia ao reconectar |
 | **RN-FIG-027** | Jornada sem atividade pelo prazo configurado pelo organizador (padrão **7 dias**) pode ser marcada `ABANDONADA` |
 
@@ -279,7 +279,7 @@ Se a Serra ainda não está no mapa: **Desenhar** polígono ou trilha → seguir
 
 | Regra | Descrição |
 |-------|-----------|
-| **RN-FIG-028** | Recompensa **parcial** é liberada no instante em que a missão daquele totem é concluída (insumos validados ou aceitos na fila offline) |
+| **RN-FIG-028** | Recompensa **parcial** é liberada quando a missão daquele totem é concluída (insumos validados ou aceitos na fila offline) |
 | **RN-FIG-029** | Recompensa **final** só é liberada com **todas as missões obrigatórias daquele percurso** concluídas |
 | **RN-FIG-030** | O conjunto das parciais **não substitui** a recompensa final |
 | **RN-FIG-031** | Recompensas são da **jornada/participante**, não do mapa. Podem aparecer depois como insígnia de perfil, se a plataforma de insígnias estiver ativa |
@@ -297,21 +297,21 @@ Se a Serra ainda não está no mapa: **Desenhar** polígono ou trilha → seguir
 
 ### 6.7. Escopo e limites
 
-Estas regras fixam o que o piloto deliberadamente **não** faz:
+O que o piloto assume de propósito:
 
 | Regra | Descrição |
 |-------|-----------|
-| **RN-FIG-045** | A trilha **não se completa remotamente**: sem check-in por scan de QR no território, a missão não fecha (GPS é reforço opcional, [RN-FIG-015](#62-totens-e-qr)) |
-| **RN-FIG-046** | O participante **não cria nem edita** mapa, geometria, totens ou missões pelo app — autoria é só no mapa web |
-| **RN-FIG-047** | No piloto o NPC é um **roteiro fixo por totem**, não um chatbot livre; IA generativa fica como evolução (ver [§14.2](#142-npc-piloto)) |
+| **RN-FIG-045** | A trilha se completa **no território**: sem check-in por scan de QR, a missão não fecha (GPS é reforço opcional, [RN-FIG-015](#62-totens-e-qr)) |
+| **RN-FIG-046** | Autoria (mapa, geometria, totens, missões) é no mapa web. O app serve à jornada no campo |
+| **RN-FIG-047** | No piloto o NPC é um **roteiro fixo por totem**. IA generativa fica como evolução (ver [§14.2](#142-npc-piloto)) |
 
 ### 6.8. Relação com missões e memórias do mapa
 
 | Regra | Descrição |
 |-------|-----------|
-| **RN-FIG-038** | Missão de totem **é** uma missão do mapa (mesma entidade, campos extras Figital) |
-| **RN-FIG-039** | Mutirão **não** é obrigatório no Figital. Pode ser vinculado depois (ex.: mutirão de plantio no fim da trilha) — fora do MVP Figital |
-| **RN-FIG-040** | Memória pode ser um tipo de insumo; se escolhida, herda geolocalização do totem |
+| **RN-FIG-038** | Missão de totem é uma missão do mapa, com os campos extras da jornada (NPC, ordem, insumos) |
+| **RN-FIG-039** | Mutirão não é obrigatório no Figital. Pode ser vinculado depois (ex.: mutirão de plantio no fim da trilha) — fora do MVP Figital |
+| **RN-FIG-040** | Memória pode ser um tipo de insumo; se escolhida, herda a geolocalização do totem |
 
 ---
 
@@ -324,7 +324,7 @@ Estas regras fixam o que o piloto deliberadamente **não** faz:
 | **Ator** | Organizador (Owner/Editor) |
 | **Pré-condição** | Mapa existente; polígono ou trilha desenhado (ou a desenhar) |
 | **Fluxo** | Desenha ou seleciona a forma → no **“+” da área**, escolhe **Totem** ou **Missão** → posiciona **dentro** da geometria → no totem: papel, missão, insumos, NPC → gera QR |
-| **Pós-condição** | Marcador Figital (totem) e/ou missão na geometria; URL profunda e arte de QR quando for totem |
+| **Pós-condição** | Totem e/ou missão na geometria; URL profunda e arte de QR quando for totem |
 | **Exceções** | Ponto fora da geometria ([RN-FIG-011](#62-totens-e-qr)); usuário sem papel Owner/Editor não vê o “+” de totem ([RN-FIG-003](#61-mapa-geometria-e-percurso)) |
 
 ### UC-02 — Configurar totem, QR e missão
@@ -343,7 +343,7 @@ Estas regras fixam o que o piloto deliberadamente **não** faz:
 |--|--|
 | **Ator** | Organizador |
 | **Pré-condição** | Mapa existente |
-| **Fluxo** | Tornar o mapa **público** permite que participantes vejam a geometria e iniciem jornada nos percursos **ativos** (com RN-FIG-009 e RN-FIG-010 atendidos). Mapa **privado** restringe a colaboradores. **Arquivar** o mapa ou **desativar** um percurso impede jornadas novas e abandona as abertas daquele escopo |
+| **Fluxo** | Mapa **público** permite que participantes vejam a geometria e iniciem jornada nos percursos **ativos** (com RN-FIG-009 e RN-FIG-010 atendidos). Mapa **privado** restringe a colaboradores. **Arquivar** o mapa ou **desativar** um percurso impede jornadas novas e abandona as abertas daquele escopo |
 | **Pós-condição** | Visibilidade do mapa atualizada e/ou percurso ativo/inativo |
 | **Exceções** | Percurso ativo sem totem de início: jornada de participante não abre (Owner/Editor ainda testam) |
 
@@ -393,7 +393,7 @@ Estas regras fixam o que o piloto deliberadamente **não** faz:
 |--|--|
 | **Ator** | Participante (ou visitante) |
 | **Pré-condição** | Scan de totem que não é `inicio`, sem jornada ativa naquele percurso |
-| **Fluxo** | App **não** abre a missão. NPC (ou mensagem equivalente) diz para ir ao totem de início. Se houver GPS, mostra o ponto de partida no mapa simplificado |
+| **Fluxo** | O app não abre a missão. O NPC (ou mensagem equivalente) pede para ir ao totem de início. Se houver GPS, mostra o ponto de partida no mapa simplificado |
 | **Pós-condição** | Nenhuma jornada criada |
 | **Exceções** | Owner/Editor em modo teste podem simular o totem |
 
@@ -421,14 +421,14 @@ Estas regras fixam o que o piloto deliberadamente **não** faz:
 
 ## 8. Roteiro: Serra do Vulcão
 
-Trilha piloto **sequencial** na Baixada Fluminense, **dentro de um mapa** do território. Percurso = a linha/polígono da trilha. Cinco totens (marcadores Figital) sobre essa geometria.
+Trilha piloto **sequencial** na Baixada Fluminense, dentro de um mapa do território. O percurso é a linha ou o polígono da trilha. Cinco totens sobre essa geometria.
 
 ### 8.1. Passo a passo da autoria
 
-1. No mapa, **desenha** (ou seleciona) o polígono/trilha **Serra do Vulcão**.
+1. No mapa, desenha (ou seleciona) o polígono/trilha **Serra do Vulcão**.
 2. Pelo **“+” da forma**, posiciona os cinco totens: `inicio` na porta da trilha, três `intermediario`, um `fim` no mirante.
 3. Em cada totem, escreve o roteiro do NPC, escolhe os insumos e a recompensa parcial (tabela abaixo).
-4. No percurso: **modo sequencial**, **insígnia final** e texto de consentimento.
+4. No percurso: modo sequencial, insígnia final e texto de consentimento.
 5. Baixa as artes de QR de cada totem para impressão. A visibilidade continua sendo a do mapa.
 
 ### 8.2. Roteiro dos totens
@@ -443,7 +443,7 @@ Trilha piloto **sequencial** na Baixada Fluminense, **dentro de um mapa** do ter
 
 Recompensa final só após totens 2, 3, 4 e 5 (todos obrigatórios neste roteiro). O totem 1 não tem missão de insumo.
 
-Este roteiro é **ilustrativo**. Outra trilha no mesmo mapa pode usar só GPS, só formulário, ou só memória — o catálogo é por missão.
+Este roteiro é ilustrativo. Outra trilha no mesmo mapa pode usar só GPS, só formulário, ou só memória — o catálogo é por missão.
 
 ---
 
@@ -461,7 +461,7 @@ Este roteiro é **ilustrativo**. Outra trilha no mesmo mapa pode usar só GPS, s
 | Ver insumos internos | Não | Não | Sim | Sim |
 | Exportar insumos | Não | Não | Sim | Sim |
 
-\* No mapa web público, o participante vê a área e totens se o mapa for visível; **não** vê insumos internos.
+\* No mapa web público, o participante vê a área e os totens se o mapa for visível; não vê insumos internos.
 
 ### 9.2. Aplicativo (jornada)
 
@@ -480,10 +480,10 @@ Este roteiro é **ilustrativo**. Outra trilha no mesmo mapa pode usar só GPS, s
 
 | Superfície | Função | Público | Dispositivo típico |
 |------------|--------|---------|-------------------|
-| **Mapa (web)** | Autoria: geometria, totens (marcadores), missões, QRs, painel de insumos | Instituição | Desktop / tablet |
+| **Mapa (web)** | Autoria: geometria, totens, missões, QRs, painel de insumos | Instituição | Desktop / tablet |
 | **App do participante** | Presença: QR, NPC, câmera, GPS, fila offline, recompensas | Pessoa na trilha | Celular |
 
-O participante **não** cria mapa nem totens no app. O organizador **não** cumpre a trilha no mapa web (pode testar QRs).
+O participante não cria mapa nem totens no app. O organizador não cumpre a trilha no mapa web (pode testar QRs).
 
 O contrato comum é a **API Figital** do mapa: geometria, totens, missões, jornada por percurso, insumos, recompensas.
 
@@ -494,7 +494,7 @@ O que a POC do mapa já oferece e o Figital reaproveita:
 - Posicionar missão ou marcador **dentro** de uma área
 - Memória ligada a missão/marcador (foto + comentário, só no cliente hoje)
 
-O que é **novo**: campos Figital no marcador (QR, papel, NPC), percurso (modo, recompensa final, consentimento), jornada, recompensas, app, persistência, insumos configuráveis. **Não** é novo um objeto Campanha.
+O que entra de novo: campos Figital no marcador (QR, papel, NPC), ficha do percurso (modo, recompensa final, consentimento), jornada, recompensas, app, persistência e insumos configuráveis.
 
 ---
 
@@ -502,11 +502,11 @@ O que é **novo**: campos Figital no marcador (QR, papel, NPC), percurso (modo, 
 
 ### 11.1. Features a acrescentar na web
 
-1. **“+” da forma** com **Totem** (marcador Figital), reusando o posicionamento só dentro da geometria ([§4](#4-como-adicionar-interações-figital)).
+1. **“+” da forma** com **Totem**, posicionando só dentro da geometria ([§4](#4-como-adicionar-interações-figital)).
 2. **Ficha do totem:** papel início / intermediário / fim, QR, missão, insumos, validação (ex.: GPS opcional, raio em metros), recompensa parcial, roteiro do NPC (falas).
 3. **Ficha do percurso** (a trilha/área selecionada, quando já tem totens): modo de progresso, recompensa final, consentimento, ativo/inativo.
 4. **Gerar e baixar arte de QR** por totem (PNG/PDF com nome do totem e do mapa/percurso).
-5. **Visibilidade do mapa** e ativar/desativar percurso (sem ciclo de publicação de campanha).
+5. **Visibilidade do mapa** e ativar/desativar percurso.
 6. **Painel do mapa / percurso:** jornadas, taxa de conclusão, insumos por totem, moderação de memórias públicas, exportação CSV/GeoJSON.
 
 ### 11.2. Telas (mapa)
@@ -522,7 +522,7 @@ O que é **novo**: campos Figital no marcador (QR, papel, NPC), percurso (modo, 
 
 ### 11.3. Fora do mapa
 
-Instalação física dos totens, impressão e material de campo **não** são software. O mapa só entrega a arte do QR e as coordenadas.
+Instalação física dos totens, impressão e material de campo não são software. O mapa entrega a arte do QR e as coordenadas.
 
 ---
 
@@ -533,12 +533,12 @@ Instalação física dos totens, impressão e material de campo **não** são so
 | Tela | Comportamento |
 |------|----------------|
 | Scan / deep link | Câmera de QR ou abertura pela URL `https://…/m/{mapa}/t/{totem}` |
-| Consentimento | Finalidades dos insumos **deste mapa**; aceitar ou sair |
+| Consentimento | Finalidades dos insumos deste mapa; aceitar ou sair |
 | Cena do NPC | Roteiro do totem atual (texto; áudio opcional). Sem chatbot livre no piloto |
 | Mapa da trilha | Totens, progresso, próximo ponto. Simplificado; não é o editor do mapa web |
 | Execução da missão | Blocos conforme o schema: câmera, áudio, texto, formulário, check-in |
 | Fila offline | “Guardado no celular — envia quando houver rede” |
-| Carteira / progresso | Parciais, falta quanto para a final **deste percurso** |
+| Carteira / progresso | Parciais, falta quanto para a final deste percurso |
 | Jornada concluída | Recompensa final + convite a ver a memória no mapa (se pública) |
 
 ### 12.2. O que o app não tem
@@ -573,7 +573,7 @@ flowchart TB
 
 ### 13.1. Recursos (nível de especificação)
 
-Não é implementação. Nomes ilustram o contrato. O escopo é **mapa** e **percurso** (trilha/área), não `campanha`.
+Não é implementação. Nomes ilustram o contrato, no escopo de **mapa** e **percurso** (trilha/área).
 
 | Recurso | Uso principal |
 |---------|----------------|
@@ -715,10 +715,10 @@ Mapa, percurso, totem, missão, jornada, tipo, horário do aparelho, horário de
 
 | Termo | Definição |
 |-------|-----------|
-| **Mapa do território** | Repositório da geometria e das interações. **É o Figital**; não há Campanha separada |
+| **Mapa do território** | Repositório da geometria e das interações Figital (visibilidade, trilhas, totens, missões) |
 | **Geometria** | Polígono, trilha (linha) ou waypoint desenhado no mapa |
-| **Percurso** | Trilha ou área **com totens**: unidade da jornada, do modo de progresso e da recompensa final |
-| **Totem** | Marcador do mapa com campos Figital (QR, papel, missão, NPC) |
+| **Percurso** | Trilha ou área com totens: unidade da jornada, do modo de progresso e da recompensa final |
+| **Totem** | Marcador do mapa com QR, papel, missão e NPC |
 | **NPC** | Persona roteirizada que explica o ponto e a missão |
 | **Jornada** | Sessão de um participante num percurso |
 | **Insumo** | Evidência configurável gerada na missão |
@@ -744,5 +744,5 @@ A instituição ainda precisa fechar, fora deste documento de produto:
 
 ---
 
-*Documento gerado em 09/09/2026, reenquadrado em 14/09/2026 — Versão 2.0*
-*Plano de produto Figital. O mapa do território é o Figital. Não altera o que a POC do mapa faz hoje.*
+*Documento gerado em 09/09/2026, atualizado em 14/09/2026 — Versão 2.1*
+*Plano de produto Figital. Não altera o que a POC do mapa faz hoje.*

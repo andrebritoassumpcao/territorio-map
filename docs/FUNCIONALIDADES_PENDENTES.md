@@ -81,12 +81,12 @@ As interações **Figital** (totens com QR, NPC, app do participante) não fazia
 
 ## Figital (plano novo — ver documento próprio)
 
-Não misturar com o MVP antigo do mapa. O mapa do território **já é** o Figital: geometria + interações (missões e totens). Detalhe de fluxo, regras (RN-FIG), casos de uso e divisão mapa vs. app: [`docs/CAMPANHA_FIGITAL.md`](CAMPANHA_FIGITAL.md).
+Não misturar com o MVP antigo do mapa. Figital no mapa: geometria + interações (missões e totens). Detalhe de fluxo, regras (RN-FIG), casos de uso e divisão mapa vs. app: [`docs/CAMPANHA_FIGITAL.md`](CAMPANHA_FIGITAL.md).
 
 Pendências resumidas até existir implementação:
 
 - Interações Figital sobre polígono/trilha: totens = marcadores com QR e papéis início / intermediário / fim
-- Jornada, modo sequencial ou livre, recompensa final e consentimento **por trilha/área** (percurso), não por uma entidade Campanha
+- Jornada, modo sequencial ou livre, recompensa final e consentimento **por trilha/área** (percurso)
 - Missões de totem com NPC roteirizado e catálogo de insumos (foto, vídeo, áudio, texto, GPS, formulário, memória)
 - Aplicativo do participante (PWA no piloto): scan, consentimento no mapa, jornada, fila offline
 - Painel no mapa: jornadas por percurso, insumos, indicadores, exportação
