@@ -5,7 +5,7 @@
 
 Este arquivo **não** descreve o produto atual. Lista só o que o plano original já definiu e a POC **ainda não tem**. Quando um item for implementado, mova-o para a documentação atual e apague-o daqui.
 
-A campanha **Figital** (QR, totens, NPC, app do participante) não fazia parte desse MVP antigo. O plano completo está em [`docs/CAMPANHA_FIGITAL.md`](CAMPANHA_FIGITAL.md); o tópico no fim deste arquivo é só o ponteiro.
+As interações **Figital** (totens com QR, NPC, app do participante) não faziam parte desse MVP antigo. O plano completo está em [`docs/CAMPANHA_FIGITAL.md`](CAMPANHA_FIGITAL.md); o tópico no fim deste arquivo é só o ponteiro.
 
 ---
 
@@ -79,15 +79,15 @@ A campanha **Figital** (QR, totens, NPC, app do participante) não fazia parte d
 - Ingerir acervo de soluções (raspagem) e camadas ambientais
 - API para puxar mapeamentos de emergência de plataformas parceiras
 
-## Campanha Figital (plano novo — ver documento próprio)
+## Figital (plano novo — ver documento próprio)
 
-Não misturar com o MVP antigo do mapa. Detalhe de fluxo, regras (RN-FIG), casos de uso e divisão mapa vs. app: [`docs/CAMPANHA_FIGITAL.md`](CAMPANHA_FIGITAL.md).
+Não misturar com o MVP antigo do mapa. O mapa do território **já é** o Figital: geometria + interações (missões e totens). Detalhe de fluxo, regras (RN-FIG), casos de uso e divisão mapa vs. app: [`docs/CAMPANHA_FIGITAL.md`](CAMPANHA_FIGITAL.md).
 
 Pendências resumidas até existir implementação:
 
-- Campanha ligada a um território (polígono/trilha), totens com QR e papéis início / intermediário / fim
-- Missões de totem com NPC roteirizado, ordem sequencial ou livre, recompensas parcial e final
-- Catálogo de insumos por missão (foto, vídeo, áudio, texto, GPS, formulário, memória)
-- Aplicativo do participante (PWA no piloto): scan, consentimento, jornada, fila offline
-- Painel no mapa: jornadas, insumos, indicadores, exportação
-- Jornada só começa no QR de início; totem intermediário sem jornada não executa missão
+- Interações Figital sobre polígono/trilha: totens = marcadores com QR e papéis início / intermediário / fim
+- Jornada, modo sequencial ou livre, recompensa final e consentimento **por trilha/área** (percurso), não por uma entidade Campanha
+- Missões de totem com NPC roteirizado e catálogo de insumos (foto, vídeo, áudio, texto, GPS, formulário, memória)
+- Aplicativo do participante (PWA no piloto): scan, consentimento no mapa, jornada, fila offline
+- Painel no mapa: jornadas por percurso, insumos, indicadores, exportação
+- Jornada só começa no QR de início daquele percurso; totem intermediário sem jornada não executa missão
