@@ -1061,6 +1061,30 @@
               </div>
 
               <div class="form-group">
+                <label class="form-label" for="input-instrucao-missao">O que deve ser feito</label>
+                <textarea
+                  id="input-instrucao-missao"
+                  class="form-textarea"
+                  rows="2"
+                  placeholder="Ex: Recolha o lixo às margens da nascente e registre com foto."
+                ></textarea>
+              </div>
+
+              <div class="form-group totem-insumos-group">
+                <div class="percurso-totens-header">
+                  <label class="form-label" id="missao-insumos-label">O que coletar</label>
+                  <button type="button" class="btn-link-add" id="btn-add-insumo-missao">Adicionar item</button>
+                </div>
+                <div id="missao-insumos-list" class="totem-insumos-list" role="group" aria-labelledby="missao-insumos-label"></div>
+                <span class="form-helper-text">Itens no mesmo grupo com mínimo 1: a pessoa escolhe um, como áudio ou texto.</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="input-recompensa-missao">Recompensa da missão</label>
+                <input type="text" id="input-recompensa-missao" class="form-input" placeholder="Ex: Insígnia Guardião das Águas" />
+              </div>
+
+              <div class="form-group">
                 <label class="form-label" for="select-categoria-missao">Categoria</label>
                 <select id="select-categoria-missao" class="form-select">
                   <option value="Meio Ambiente">Meio Ambiente & Reflorestamento</option>
@@ -1071,8 +1095,40 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label" for="input-prazo-missao">Prazo Estimado</label>
-                <input type="date" id="input-prazo-missao" class="form-input" value="2026-09-30" />
+                <label class="switch-field">
+                  <span class="switch-field-label">Tem prazo?</span>
+                  <span class="switch">
+                    <input type="checkbox" id="toggle-prazo-missao" checked />
+                    <span class="switch-track"><span class="switch-thumb"></span></span>
+                  </span>
+                </label>
+                <div id="prazo-missao-wrapper">
+                  <label class="form-label" for="input-prazo-missao">Prazo Estimado</label>
+                  <input type="date" id="input-prazo-missao" class="form-input" value="2026-09-30" />
+                </div>
+              </div>
+
+              <label class="switch-field">
+                <span class="switch-field-label">Tem personagem que fala? (NPC)</span>
+                <span class="switch">
+                  <input type="checkbox" id="toggle-npc-missao" />
+                  <span class="switch-track"><span class="switch-thumb"></span></span>
+                </span>
+              </label>
+
+              <div id="missao-npc-section" hidden>
+                <div class="form-group">
+                  <label class="form-label" for="input-npc-nome-missao">Nome de quem fala</label>
+                  <input type="text" id="input-npc-nome-missao" class="form-input" placeholder="Ex: Guardiã da Serra" value="Guardiã do território" />
+                </div>
+
+                <div class="form-group">
+                  <div class="percurso-totens-header">
+                    <label class="form-label" id="missao-falas-label">O que essa pessoa diz</label>
+                    <button type="button" class="btn-link-add" id="btn-add-fala-missao">Adicionar fala</button>
+                  </div>
+                  <div id="missao-npc-falas" class="totem-npc-falas" role="group" aria-labelledby="missao-falas-label"></div>
+                </div>
               </div>
             </div>
 
@@ -1220,72 +1276,58 @@
 
             <!-- 5. ABA TOTEM (Fase 1.2 / 1.4 — Figital) — 3 etapas -->
             <div class="tab-panel" id="tab-content-totem" style="display: none;">
-              <ol class="totem-stepper" aria-label="Etapas do totem">
-                <li>
-                  <button type="button" class="totem-step-btn is-active" data-totem-step="1" aria-current="step">
-                    <span class="totem-step-index">1</span>
-                    <span class="totem-step-name">Ponto</span>
-                  </button>
-                </li>
-                <li>
-                  <button type="button" class="totem-step-btn" data-totem-step="2">
-                    <span class="totem-step-index">2</span>
-                    <span class="totem-step-name">Quem fala</span>
-                  </button>
-                </li>
-                <li>
-                  <button type="button" class="totem-step-btn" data-totem-step="3">
-                    <span class="totem-step-index">3</span>
-                    <span class="totem-step-name">Missão</span>
-                  </button>
-                </li>
-              </ol>
+              <p class="tab-description-text">
+                Este ponto fica na trilha ou área escolhida. Serve para marcar o início, o fim ou um ponto específico do caminho, com uma descrição do local.
+              </p>
 
-              <div class="totem-step-panel" data-totem-step-panel="1">
-                <p class="tab-description-text">
-                  Este ponto fica na trilha ou área escolhida.
-                </p>
-
-                <div class="form-group">
-                  <label class="form-label" for="input-nome-totem">Nome do totem</label>
-                  <input type="text" id="input-nome-totem" class="form-input" placeholder="Ex: Porta da trilha" maxlength="80" />
-                  <span class="form-error hidden" id="totem-nome-error">Dê um nome a este totem.</span>
-                </div>
-
-                <fieldset class="totem-papel-fieldset">
-                  <legend class="form-label" id="totem-papel-label">Papel na jornada</legend>
-                  <div class="totem-papel-selector" role="radiogroup" aria-labelledby="totem-papel-label">
-                    <label class="totem-papel-option">
-                      <input type="radio" name="papel-totem" value="inicio" />
-                      <span class="totem-papel-option-body">
-                        <strong>Início</strong>
-                        <small>Abre a jornada. Só um por percurso.</small>
-                      </span>
-                    </label>
-                    <label class="totem-papel-option">
-                      <input type="radio" name="papel-totem" value="intermediario" />
-                      <span class="totem-papel-option-body">
-                        <strong>Intermediário</strong>
-                        <small>Parada no caminho, com um pedido.</small>
-                      </span>
-                    </label>
-                    <label class="totem-papel-option">
-                      <input type="radio" name="papel-totem" value="fim" />
-                      <span class="totem-papel-option-body">
-                        <strong>Fim</strong>
-                        <small>Última parada. Encerra a jornada.</small>
-                      </span>
-                    </label>
-                  </div>
-                  <span class="form-helper-text" id="totem-papel-helper">Todo percurso precisa de um totem de início.</span>
-                </fieldset>
+              <div class="form-group">
+                <label class="form-label" for="input-nome-totem">Nome do totem</label>
+                <input type="text" id="input-nome-totem" class="form-input" placeholder="Ex: Porta da trilha" maxlength="80" />
+                <span class="form-error hidden" id="totem-nome-error">Dê um nome a este totem.</span>
               </div>
 
-              <div class="totem-step-panel" data-totem-step-panel="2" hidden>
-                <p class="tab-description-text">
-                  Quem recebe a pessoa neste ponto.
-                </p>
+              <fieldset class="totem-papel-fieldset">
+                <legend class="form-label" id="totem-papel-label">Tipo do ponto</legend>
+                <div class="totem-papel-selector" role="radiogroup" aria-labelledby="totem-papel-label">
+                  <label class="totem-papel-option">
+                    <input type="radio" name="papel-totem" value="inicio" />
+                    <span class="totem-papel-option-body">
+                      <strong>Início</strong>
+                      <small>Marca o começo da trilha. Só um por percurso.</small>
+                    </span>
+                  </label>
+                  <label class="totem-papel-option">
+                    <input type="radio" name="papel-totem" value="intermediario" />
+                    <span class="totem-papel-option-body">
+                      <strong>Ponto específico</strong>
+                      <small>Um lugar de interesse ao longo do caminho.</small>
+                    </span>
+                  </label>
+                  <label class="totem-papel-option">
+                    <input type="radio" name="papel-totem" value="fim" />
+                    <span class="totem-papel-option-body">
+                      <strong>Fim</strong>
+                      <small>Marca o final da trilha.</small>
+                    </span>
+                  </label>
+                </div>
+                <span class="form-helper-text" id="totem-papel-helper">Todo percurso precisa de um totem de início.</span>
+              </fieldset>
 
+              <div class="form-group">
+                <label class="form-label" for="input-descricao-totem">Descrição / curiosidades do ponto</label>
+                <textarea id="input-descricao-totem" class="form-textarea" rows="3" placeholder="Conte o que há de interessante neste lugar da trilha."></textarea>
+              </div>
+
+              <label class="switch-field">
+                <span class="switch-field-label">Tem personagem que fala? (NPC)</span>
+                <span class="switch">
+                  <input type="checkbox" id="toggle-npc-totem" />
+                  <span class="switch-track"><span class="switch-thumb"></span></span>
+                </span>
+              </label>
+
+              <div id="totem-npc-section" hidden>
                 <div class="form-group">
                   <label class="form-label" for="input-npc-nome">Nome de quem fala</label>
                   <input type="text" id="input-npc-nome" class="form-input" placeholder="Ex: Guardiã da Serra" value="Guardiã do território" />
@@ -1299,57 +1341,12 @@
                   <div id="totem-npc-falas" class="totem-npc-falas" role="group" aria-labelledby="totem-falas-label"></div>
                 </div>
               </div>
-
-              <div class="totem-step-panel" data-totem-step-panel="3" hidden>
-                <p class="tab-description-text" id="totem-missao-intro">
-                  Peça algo neste ponto — uma foto, um texto, um áudio ou um check-in.
-                </p>
-
-                <div class="form-group" id="totem-missao-group">
-                  <label class="form-label" for="input-titulo-missao-totem">Título da missão</label>
-                  <input type="text" id="input-titulo-missao-totem" class="form-input" placeholder="Ex: Fotografe o vale" />
-                  <span class="form-error hidden" id="totem-missao-error">Dê um título à missão deste ponto.</span>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label" for="input-instrucao-npc-totem">O que pedir aqui</label>
-                  <textarea id="input-instrucao-npc-totem" class="form-textarea" rows="3" placeholder="Ex: Fotografe o vale e diga, numa frase, o que mudou na paisagem."></textarea>
-                </div>
-
-                <div class="filter-date-row">
-                  <div class="form-group" style="flex:1">
-                    <label class="form-label" for="input-ordem-missao-totem">Ordem na jornada</label>
-                    <input type="number" id="input-ordem-missao-totem" class="form-input" min="1" value="1" />
-                  </div>
-                  <div class="form-group" style="flex:1">
-                    <label class="form-label" for="input-recompensa-parcial-totem">Recompensa neste ponto</label>
-                    <input type="text" id="input-recompensa-parcial-totem" class="form-input" placeholder="Ex: Insígnia Olhar da Serra" />
-                  </div>
-                </div>
-
-                <label class="percurso-toggle">
-                  <input type="checkbox" id="input-obrigatoria-missao-totem" checked />
-                  <span>Conta para a recompensa final</span>
-                </label>
-
-                <div class="form-group totem-insumos-group">
-                  <div class="percurso-totens-header">
-                    <label class="form-label" id="totem-insumos-label">O que coletar</label>
-                    <button type="button" class="btn-link-add" id="btn-add-insumo">Adicionar item</button>
-                  </div>
-                  <div id="totem-insumos-list" class="totem-insumos-list" role="group" aria-labelledby="totem-insumos-label"></div>
-                  <span class="form-helper-text">Itens no mesmo grupo com mínimo 1: a pessoa escolhe um, como áudio ou texto.</span>
-                </div>
-              </div>
             </div>
           </div>
 
           <div class="modal-footer">
             <button type="button" class="btn-secondary" id="btn-cancel-modal">
               Cancelar
-            </button>
-            <button type="button" class="btn-secondary hidden" id="btn-totem-back">
-              Voltar
             </button>
             <button
               type="submit"

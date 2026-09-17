@@ -44,7 +44,7 @@ As interações **Figital** (totens com QR, NPC, app do participante) não fazia
 
 - Missão sempre pertencente a um mapa
 - Ciclo de status: Aberta → Em andamento → Concluída / Cancelada (com reabertura)
-- Prazo opcional; missão contínua se não houver prazo; vencimento **não** muda status sozinho
+- Vencimento **não** muda status sozinho (o prazo opcional / missão contínua já está na UI — interruptor "Tem prazo?", ver DOCUMENTACAO_ATUAL §9)
 - Só Owner/Editor criam e mudam status
 - Zero ou mais mutirões por missão
 

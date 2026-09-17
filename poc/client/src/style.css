@@ -1591,11 +1591,69 @@ input[type="color"]::-webkit-color-swatch {
 .card-btn-purple { background: var(--memoria-color); color: white; }
 .card-btn-purple:hover { background: #7c3aed; }
 
+.card-btn-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+}
+.card-btn-outline:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
 .card-action-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-top: 4px;
+}
+
+.card-instrucao,
+.card-providencias {
+  margin: 8px 0;
+  padding: 10px 12px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.card-instrucao-label,
+.card-providencias-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.card-instrucao-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
+
+.card-providencias-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-providencias-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
+
+.card-providencias-item input {
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 /* --------------------------------------------------------------------------
@@ -2320,6 +2378,8 @@ input[type="color"]::-webkit-color-swatch {
   left: 0;
   width: 100vw;
   height: 100vh;
+  padding: 16px;
+  box-sizing: border-box;
   background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(4px);
   z-index: 2000;
@@ -2338,7 +2398,10 @@ input[type="color"]::-webkit-color-swatch {
 
 .modal-card {
   width: 100%;
-  max-width: 480px;
+  max-width: 560px;
+  max-height: min(90vh, 780px);
+  display: flex;
+  flex-direction: column;
   background: white;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -2347,32 +2410,13 @@ input[type="color"]::-webkit-color-swatch {
   transition: transform 0.25s ease;
 }
 
-.modal-card.is-totem-wizard {
-  max-width: 520px;
-  max-height: min(90vh, 740px);
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-card.is-totem-wizard #creation-form {
+/* O formulário ocupa a altura restante do card e deixa o corpo rolar,
+   mantendo cabeçalho e rodapé sempre visíveis (antes só o wizard fazia isso). */
+#creation-form {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
-}
-
-.modal-card.is-totem-wizard .modal-body {
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
-
-.modal-card.is-totem-wizard .modal-footer {
-  justify-content: space-between;
-}
-
-.modal-card.is-totem-wizard .modal-footer .card-btn {
-  margin-left: auto;
 }
 
 .modal-backdrop.open .modal-card {
@@ -2426,6 +2470,9 @@ input[type="color"]::-webkit-color-swatch {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .form-group {
@@ -2766,6 +2813,72 @@ input[type="color"]::-webkit-color-swatch {
   width: 16px;
   height: 16px;
   accent-color: var(--primary);
+}
+
+/* Interruptor (switch) para opções liga/desliga, ex.: NPC e prazo da missão. */
+.switch-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.switch-field-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+}
+
+.switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.switch-track {
+  flex: 1;
+  border-radius: 999px;
+  background: var(--border-color);
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  pointer-events: none;
+}
+
+.switch-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
+  transition: transform 0.2s ease;
+}
+
+.switch input:checked + .switch-track {
+  background: var(--primary);
+}
+
+.switch input:checked + .switch-track .switch-thumb {
+  transform: translateX(18px);
+}
+
+.switch input:focus-visible + .switch-track {
+  box-shadow: 0 0 0 3px rgba(27, 122, 78, 0.25);
 }
 
 .percurso-visibilidade-aviso {

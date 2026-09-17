@@ -31,7 +31,7 @@ export const PAPEIS_TOTEM = Object.freeze([
 
 export const PAPEL_TOTEM_LABEL = Object.freeze({
   [PAPEL_TOTEM.INICIO]: 'Início',
-  [PAPEL_TOTEM.INTERMEDIARIO]: 'Intermediário',
+  [PAPEL_TOTEM.INTERMEDIARIO]: 'Ponto específico',
   [PAPEL_TOTEM.FIM]: 'Fim'
 });
 
@@ -143,9 +143,11 @@ export function createMissaoTotem(overrides = {}) {
 }
 
 /**
- * Totem (§3.4 / RN-FIG-005): marcador do mapa com papel, QR, missão
- * associada e roteiro do NPC. Fica dentro da geometria do percurso
- * (RN-FIG-011), nunca solto via "Novo marcador" (RN-FIG-041).
+ * Totem (§3.4 / RN-FIG-005): ponto de trilha com papel (início/específico/fim),
+ * descrição/curiosidades do local, roteiro de NPC **opcional** e QR. Fica dentro
+ * da geometria do percurso (RN-FIG-011), nunca solto via "Novo marcador"
+ * (RN-FIG-041). A autoria de missão (o que pedir/coletar) mudou para o marcador
+ * de missão do mapa — o totem não carrega mais missão.
  */
 export function createTotem(overrides = {}) {
   return {
@@ -156,13 +158,8 @@ export function createTotem(overrides = {}) {
     lat: overrides.lat ?? null,
     lng: overrides.lng ?? null,
     papel: overrides.papel || PAPEL_TOTEM.INTERMEDIARIO,
-    missao: overrides.missao || null, // objeto criado por createMissaoTotem, ou null (ex.: totem de início sem insumo)
-    roteiroNpc: overrides.roteiroNpc || {
-      nome: 'Guardiã do território',
-      falas: [
-        { id: 'intro', texto: '' }
-      ]
-    },
+    descricao: overrides.descricao || '',
+    roteiroNpc: overrides.roteiroNpc || null, // { nome, falas: [{id, texto}] } ou null (NPC opcional)
     qr: overrides.qr || null // { url, assinatura, geradoEm }
   };
 }
@@ -264,6 +261,15 @@ export function gerarUrlQr({ dominio = 'app.territorio.ai', mapaId, totemId, ass
   return `https://${dominio}/m/${mapaId}/t/${totemId}?s=${s}`;
 }
 
+/**
+ * URL profunda da missão do mapa (mesmo padrão do totem, §14.1):
+ * https://{dominio-app}/m/{mapaId}/missao/{missaoId}?s={assinatura}
+ */
+export function gerarUrlQrMissao({ dominio = 'app.territorio.ai', mapaId, missaoId, assinatura }) {
+  const s = assinatura || gerarAssinaturaMock(mapaId, missaoId);
+  return `https://${dominio}/m/${mapaId}/missao/${missaoId}?s=${s}`;
+}
+
 // ---------------------------------------------------------------------------
 // Manifesto do percurso (§13.1 GET /mapas/{id}/percursos/{id}/manifest)
 // Mesmo formato que a Fase 1.7 deve devolver na API — construído aqui
@@ -285,16 +291,8 @@ export function construirManifestoPercurso(percurso) {
       papel: t.papel,
       lat: t.lat,
       lng: t.lng,
-      npc: t.roteiroNpc,
-      missao: t.missao ? {
-        missaoId: t.missao.id,
-        titulo: t.missao.titulo,
-        instrucaoNpc: t.missao.instrucaoNpc,
-        ordem: t.missao.ordem,
-        obrigatoria: t.missao.obrigatoria,
-        recompensaParcial: t.missao.recompensaParcial,
-        catalogoInsumos: t.missao.catalogoInsumos
-      } : null
+      descricao: t.descricao || '',
+      npc: t.roteiroNpc || null
     }))
   };
 }

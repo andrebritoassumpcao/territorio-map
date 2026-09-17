@@ -223,13 +223,15 @@ Memória **não** entra nessa sub-barra. Memória só nasce a partir de uma miss
 
 O modal também pode ser usado com abas (missão / mutirão / marcador). A aba Memória existe no DOM, mas fica oculta no seletor de abas.
 
+O modal tem largura de ~560px e **altura limitada** (`min(90vh, 780px)`): cabeçalho e rodapé ficam fixos e o corpo do formulário rola por dentro, então formulários longos (ex.: missão com "O que coletar" + NPC) não estouram a tela. As opções liga/desliga (NPC no totem e na missão, "Tem prazo?" na missão) usam um **interruptor (switch)** em vez de checkbox.
+
 ---
 
 ## 9. Missões
 
 ### Dados mockados na carga
 
-Quatro missões de exemplo (nascente Sarapuí, horta comunitária, reflorestamento, monitoramento da água), com título, status, prazo e número de voluntários.
+Quatro missões de exemplo (nascente Sarapuí, horta comunitária, reflorestamento, monitoramento da água), com título, status, número de voluntários, **instrução ("o que deve ser feito")**, **catálogo "o que coletar"** (insumos estruturados: foto/vídeo/áudio/texto/GPS/formulário/memória), **recompensa**, **NPC opcional** (`npc`) e **prazo opcional** (`temPrazo` + `prazo`). Cada missão também carrega um campo `qr` (nulo até ser gerado). A autoria de missão que antes ficava no totem (o que pedir / o que coletar / recompensa) foi movida para cá.
 
 Status usados na POC visual: **Em andamento**, **Planejado**, **Ativa** (não seguem ainda o ciclo Aberta → Em andamento → Concluída → Cancelada da regra de negócio).
 
@@ -239,18 +241,25 @@ Campos:
 
 - Título (obrigatório)
 - Descrição
+- **O que deve ser feito** (instrução)
+- **O que coletar** — construtor de insumos estruturados (tipo foto/vídeo/áudio/texto/GPS/formulário/memória, obrigatoriedade, visibilidade, grupo + mínimo, raio para GPS). Reaproveita `createItemInsumo` (`figital/model.js`), o mesmo do totem antigo.
+- **Recompensa da missão**
 - Categoria: Meio Ambiente & Reflorestamento; Proteção de Nascentes e Rios; Prevenção de Alagamentos e Riscos; Agricultura Urbana e Hortas
-- Prazo estimado (data)
+- **Prazo** — interruptor "Tem prazo?"; ligado mostra o campo de data, desligado deixa a missão contínua (sem prazo)
+- **NPC opcional** — interruptor "Tem personagem que fala?"; ligado abre nome do personagem + falas
 
 O ponto no mapa é o clique (ou o ponto interno da forma, se vier do “adicionar à área”).
 
 ### Popup da missão
 
 - Tipo e status
-- Prazo e voluntários (valores ilustrativos)
+- Prazo (ou "Sem prazo — missão contínua"), recompensa e voluntários (valores ilustrativos)
+- **Instrução ("o que deve ser feito")** e **checklist "O que coletar"** (itens só leitura, com marca de opcional)
+- **Personagem + falas** quando a missão tem NPC
 - Avatares estáticos
 - **Ver detalhes da missão** — só dispara toast
 - **Criar mutirão para esta missão** — abre o modal de vincular mutirão existente
+- **Gerar arte de QR** — gera PNG via `qrcode` (npm) com a URL `https://{dominio}/m/{mapaId}/missao/{missaoId}?s={assinatura}`, mesmo padrão e assinatura mock local (`gerarAssinaturaMock`) do QR de totem (§16). Só geração de arte (link + PNG baixável); ainda não há tela de leitura/execução do QR — o consumo continua stub de servidor.
 - **Adicionar memória** — abre o fluxo de memória já ligada a essa missão
 
 Não há persistência, dono, permissão, alteração real de status nem lista de missões fora do mapa.
@@ -385,17 +394,17 @@ Entregue conforme `docs/PLANO_IMPLEMENTACAO_FIGITAL.md` / `docs/fases de impleme
 
 ### Modelo de dados
 
-`poc/client/src/figital/model.js` define **Percurso**, **Totem**, **Missão de totem** e **Item de insumo**, além de validação (`validarPercurso`) e geração de URL/assinatura de QR. É o mesmo formato que `poc/server/figital.js` expõe pela API.
+`poc/client/src/figital/model.js` define **Percurso**, **Totem** e **Item de insumo**, além de validação (`validarPercurso`) e geração de URL/assinatura de QR. É o mesmo formato que `poc/server/figital.js` expõe pela API. O totem **não carrega mais missão** — passou a ter `descricao` e `roteiroNpc` opcional (pode ser `null`). A fábrica `createMissaoTotem` continua exportada para contrato, mas o app não a usa; o catálogo "o que coletar" agora vive no marcador de missão (§9).
 
 ### Totem na ficha da forma
 
-O **"+"** de uma trilha/área selecionada (`shape-actions`) agora oferece **Missão**, **Totem** e **Marcador**. Totem só entra dentro da geometria selecionada (nunca pelo "Novo Marcador" solto, RN-FIG-041). O editor de totem abre em **3 etapas** no modal: (1) nome e papel na jornada (início, intermediário ou fim), (2) nome de quem fala e falas, (3) missão do totem (título, o que pedir, ordem, recompensa neste ponto, se conta para a recompensa final) e catálogo do que coletar. O mesmo fluxo reabre em modo edição pelo botão "Editar totem" no popup do totem ou pela ficha do percurso.
+O **"+"** de uma trilha/área selecionada (`shape-actions`) oferece **Missão**, **Totem** e **Marcador**. Totem só entra dentro da geometria selecionada (nunca pelo "Novo Marcador" solto, RN-FIG-041). O editor de totem é um **formulário único** (sem assistente de etapas): nome, **tipo do ponto** (Início, Ponto específico ou Fim), **descrição/curiosidades** e um **NPC opcional** (interruptor "Tem personagem que fala?"; ligado abre nome + falas). O totem serve só para marcar e descrever o ponto — quem conduz a ação (o que pedir/coletar/recompensa) é o marcador de missão. O mesmo fluxo reabre em modo edição pelo botão "Editar totem" no popup do totem ou pela ficha do percurso.
 
 Validação client-side antes de liberar o percurso: só um totem `inicio` por percurso (RN-FIG-009, bloqueia no submit com toast); totem sempre nasce dentro da geometria (RN-FIG-011, herdado do fluxo "adicionar dentro"); pelo menos um totem além do início (RN-FIG-010, mostrado como pendência na ficha do percurso e no painel, não bloqueia o salvamento).
 
-### Catálogo de insumos
+### Catálogo de insumos ("O que coletar")
 
-Dentro da etapa "Missão" do editor de totem, lista dinâmica do que coletar (foto, vídeo, áudio, texto, GPS/check-in, formulário, memória) com obrigatoriedade, rótulo, visibilidade (interno/mapa público) e agrupamento opcional (`grupoId` + `minimoGrupo`, para regras como "áudio ou texto"). Insumo `gps` ganha campos extras de raio em metros e obrigatoriedade do GPS.
+Lista dinâmica do que coletar (foto, vídeo, áudio, texto, GPS/check-in, formulário, memória) com obrigatoriedade, rótulo, visibilidade (interno/mapa público) e agrupamento opcional (`grupoId` + `minimoGrupo`, para regras como "áudio ou texto"). Insumo `gps` ganha campos extras de raio em metros e obrigatoriedade do GPS. O construtor é reaproveitado no **formulário de missão** (§9); o construtor de falas do NPC também é compartilhado entre totem e missão.
 
 ### Ficha do percurso
 

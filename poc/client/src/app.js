@@ -11,12 +11,11 @@ import {
   TIPO_INSUMO_LABEL,
   VISIBILIDADE_INSUMO,
   createItemInsumo,
-  createMissaoTotem,
   createTotem,
   createPercurso,
   validarPercurso,
-  totemPrecisaDeMissao,
   gerarUrlQr,
+  gerarUrlQrMissao,
   gerarAssinaturaMock
 } from './figital/model.js';
 
@@ -375,6 +374,16 @@ document.addEventListener('DOMContentLoaded', () => {
       prazo: '30/09/2026',
       participantes: 18,
       categoria: 'recursos-hidricos',
+      instrucao: 'Limpe as margens da nascente e registre o antes e o depois com fotos.',
+      insumos: [
+        { tipo: 'foto', obrigatorio: true, rotulo: 'Foto do antes' },
+        { tipo: 'foto', obrigatorio: true, rotulo: 'Foto do depois' },
+        { tipo: 'gps', obrigatorio: false, rotulo: 'Coordenada da nascente' }
+      ],
+      recompensa: 'Insígnia Guardião das Águas',
+      npc: null,
+      temPrazo: true,
+      qr: null,
       tipo: 'missao'
     },
     {
@@ -386,6 +395,15 @@ document.addEventListener('DOMContentLoaded', () => {
       prazo: '15/10/2026',
       participantes: 24,
       categoria: 'meio-ambiente',
+      instrucao: 'Prepare os canteiros e plante as mudas da estação no espaço comunitário.',
+      insumos: [
+        { tipo: 'foto', obrigatorio: true, rotulo: 'Foto dos canteiros' },
+        { tipo: 'texto', obrigatorio: false, rotulo: 'Relato do plantio' }
+      ],
+      recompensa: 'Insígnia Mão na Terra',
+      npc: null,
+      temPrazo: true,
+      qr: null,
       tipo: 'missao'
     },
     {
@@ -397,6 +415,14 @@ document.addEventListener('DOMContentLoaded', () => {
       prazo: '12/11/2026',
       participantes: 9,
       categoria: 'meio-ambiente',
+      instrucao: 'Plante mudas nativas na encosta para conter a erosão do solo.',
+      insumos: [
+        { tipo: 'foto', obrigatorio: true, rotulo: 'Foto da área replantada' }
+      ],
+      recompensa: 'Insígnia Semente do Futuro',
+      npc: null,
+      temPrazo: true,
+      qr: null,
       tipo: 'missao'
     },
     {
@@ -408,6 +434,15 @@ document.addEventListener('DOMContentLoaded', () => {
       prazo: '30/12/2026',
       participantes: 12,
       categoria: 'recursos-hidricos',
+      instrucao: 'Colete amostras da água em cada ponto e registre os valores medidos.',
+      insumos: [
+        { tipo: 'formulario', obrigatorio: true, rotulo: 'pH e turbidez' },
+        { tipo: 'gps', obrigatorio: true, rotulo: 'Coordenada da coleta' }
+      ],
+      recompensa: 'Insígnia Olho D\'Água',
+      npc: null,
+      temPrazo: true,
+      qr: null,
       tipo: 'missao'
     }
   ];
@@ -637,6 +672,42 @@ document.addEventListener('DOMContentLoaded', () => {
       `
       : '';
     const detailsLabel = data.participantes ? 'Ver detalhes da missão' : 'Ver missão';
+    const instrucao = data.instrucao
+      ? `
+        <div class="card-instrucao">
+          <span class="card-instrucao-label">O que deve ser feito</span>
+          <p class="card-instrucao-text">${escapeHtml(data.instrucao)}</p>
+        </div>
+      `
+      : '';
+    const coletar = (data.insumos && data.insumos.length)
+      ? `
+        <div class="card-providencias">
+          <span class="card-providencias-label">O que coletar</span>
+          <ul class="card-providencias-list">
+            ${data.insumos.map(it => `
+              <li class="card-providencias-item">
+                <input type="checkbox" disabled /> <span>${escapeHtml(it.rotulo || TIPO_INSUMO_LABEL[it.tipo] || it.tipo)}${it.obrigatorio ? '' : ' <em>(opcional)</em>'}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `
+      : '';
+    const recompensa = data.recompensa
+      ? `<div class="card-meta-item">Recompensa: <strong>${escapeHtml(data.recompensa)}</strong></div>`
+      : '';
+    const npc = data.npc
+      ? `
+        <div class="card-instrucao">
+          <span class="card-instrucao-label">Personagem: ${escapeHtml(data.npc.nome || '')}</span>
+          ${(data.npc.falas || []).filter(f => f.texto).map(f => `<p class="card-instrucao-text">"${escapeHtml(f.texto)}"</p>`).join('')}
+        </div>
+      `
+      : '';
+    const prazoLinha = (data.temPrazo === false || !data.prazo)
+      ? `<div class="card-meta-item">Prazo: <strong>Sem prazo — missão contínua</strong></div>`
+      : `<div class="card-meta-item">Prazo: <strong>${escapeHtml(formatMemoryDate(data.prazo))}</strong></div>`;
     return `
       <div class="card-header-badge">
         <span class="card-type-tag missao">Missão</span>
@@ -646,9 +717,13 @@ document.addEventListener('DOMContentLoaded', () => {
       ${desc}
       <div class="card-meta">
         ${cat}
-        <div class="card-meta-item">Prazo: <strong>${escapeHtml(formatMemoryDate(data.prazo))}</strong></div>
+        ${prazoLinha}
+        ${recompensa}
         ${volunteers}
       </div>
+      ${instrucao}
+      ${coletar}
+      ${npc}
       ${avatars}
       ${vinculoShapeHtml(data.vinculo)}
       <div class="card-action-group">
@@ -656,7 +731,11 @@ document.addEventListener('DOMContentLoaded', () => {
         <button class="card-btn card-btn-outline-amber" type="button" onclick="openCreateMutiraoForMissao('${escapeJsString(data.titulo)}')">
           Criar mutirão para esta missão
         </button>
+        <button class="card-btn card-btn-outline" type="button" onclick="gerarQrMissao('${escapeJsString(data.id)}')">
+          Gerar arte de QR
+        </button>
       </div>
+      <div id="qr-preview-missao-${data.id}"></div>
     `;
   }
 
@@ -2044,6 +2123,9 @@ document.addEventListener('DOMContentLoaded', () => {
       editingTotemId = null;
       resetTotemForm(placeState.shape);
     }
+    if (placeState.type === 'missao') {
+      resetMissaoForm();
+    }
     if (modalTitleEl) modalTitleEl.textContent = MODAL_TITLES[placeState.type] || 'Novo marcador';
     if (modalTabsEl) modalTabsEl.classList.add('hidden');
     setActiveTab(placeState.type || 'marcador');
@@ -2088,15 +2170,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Atualiza o texto e estilo do botão de confirmação conforme o UX Writing da aba
     if (btnSubmitModal) {
       btnSubmitModal.className = 'card-btn';
+      if (btnCancelModal) btnCancelModal.classList.remove('hidden');
       if (tabName === 'totem') {
         btnSubmitModal.classList.add('card-btn-primary');
-        creationModal?.querySelector('.modal-card')?.classList.add('is-totem-wizard');
-        setTotemStep(1);
+        btnSubmitModal.textContent = editingTotemId ? 'Salvar totem' : 'Criar totem';
       } else {
-        creationModal?.querySelector('.modal-card')?.classList.remove('is-totem-wizard');
-        const backBtn = document.getElementById('btn-totem-back');
-        if (backBtn) backBtn.classList.add('hidden');
-        if (btnCancelModal) btnCancelModal.classList.remove('hidden');
         if (tabName === 'missao') {
           btnSubmitModal.classList.add('card-btn-primary');
           btnSubmitModal.textContent = 'Criar Missão';
@@ -2191,11 +2269,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (creationForm) {
     creationForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      if (currentActiveTab === 'totem' && totemStep < TOTEM_STEP_COUNT) {
-        if (!validateTotemStep(totemStep)) return;
-        setTotemStep(totemStep + 1);
-        return;
-      }
       const center = placeState.latlng || map.getCenter();
       const vinculoForma = placeState.source === 'shape' && placeState.shape
         ? { tipo: placeState.shape.tipo, titulo: placeState.shape.titulo }
@@ -2206,7 +2279,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const titleInput = document.getElementById('input-titulo-missao').value || 'Nova Missão no Território';
         const descInput = document.getElementById('input-descricao-missao').value || 'Ação comunitária para melhoria local.';
         const catInput = document.getElementById('select-categoria-missao').value;
-        const prazoInput = document.getElementById('input-prazo-missao').value;
+        const instrucaoInput = (document.getElementById('input-instrucao-missao')?.value || '').trim();
+        const recompensaInput = (document.getElementById('input-recompensa-missao')?.value || '').trim();
+        const temPrazo = !!document.getElementById('toggle-prazo-missao')?.checked;
+        const prazoInput = temPrazo ? document.getElementById('input-prazo-missao').value : '';
+        const insumos = missaoInsumosBuilder.get();
+        const temNpc = !!document.getElementById('toggle-npc-missao')?.checked;
+        const npc = temNpc
+          ? {
+              nome: document.getElementById('input-npc-nome-missao')?.value || 'Guardiã do território',
+              falas: missaoFalasBuilder.get()
+            }
+          : null;
         const newData = {
           id: newFeatureId('m'),
           lat: center.lat,
@@ -2214,9 +2298,15 @@ document.addEventListener('DOMContentLoaded', () => {
           titulo: titleInput,
           descricao: descInput,
           status: 'Em andamento',
+          temPrazo,
           prazo: prazoInput,
           categoria: categoriaKey(catInput),
           categoriaLabel: catInput,
+          instrucao: instrucaoInput,
+          insumos,
+          recompensa: recompensaInput,
+          npc,
+          qr: null,
           vinculo: vinculoForma,
           memorias: [],
           tipo: 'missao'
@@ -2430,175 +2520,236 @@ document.addEventListener('DOMContentLoaded', () => {
     return `Totem ${n}`;
   }
 
-  // ---- Formulário de totem: falas do NPC ----
+  // ---- Construtor reutilizável: falas do NPC (totem e missão) ----
 
-  let totemFormFalas = [];
-  let totemFormInsumos = [];
-
-  function renderTotemFalas() {
-    const container = document.getElementById('totem-npc-falas');
-    if (!container) return;
-    container.innerHTML = totemFormFalas.map((fala, i) => `
-      <div class="totem-fala-row" data-fala-index="${i}">
-        <div class="totem-fala-row-header">
-          <span>Fala ${i + 1}</span>
-          <button type="button" class="row-remove-btn" data-remove-fala="${i}">Remover</button>
+  function createFalasBuilder({ listId, addBtnId }) {
+    const state = [];
+    function render() {
+      const container = document.getElementById(listId);
+      if (!container) return;
+      container.innerHTML = state.map((fala, i) => `
+        <div class="totem-fala-row" data-fala-index="${i}">
+          <div class="totem-fala-row-header">
+            <span>Fala ${i + 1}</span>
+            <button type="button" class="row-remove-btn" data-remove-fala="${i}">Remover</button>
+          </div>
+          <textarea class="form-textarea totem-fala-texto" rows="2" placeholder="Ex: Bem-vinda à serra. Siga até o mirante." data-fala-texto="${i}">${escapeHtml(fala.texto || '')}</textarea>
         </div>
-        <textarea class="form-textarea totem-fala-texto" rows="2" placeholder="Ex: Bem-vinda à serra. Siga até o mirante." data-fala-texto="${i}">${escapeHtml(fala.texto || '')}</textarea>
-      </div>
-    `).join('') || '<p class="figital-empty-state">Nenhuma fala ainda. Adicione a primeira.</p>';
+      `).join('') || '<p class="figital-empty-state">Nenhuma fala ainda. Adicione a primeira.</p>';
 
-    container.querySelectorAll('[data-remove-fala]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        syncTotemFalasFromDom();
-        const idx = Number(btn.getAttribute('data-remove-fala'));
-        totemFormFalas.splice(idx, 1);
-        renderTotemFalas();
+      container.querySelectorAll('[data-remove-fala]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          syncFromDom();
+          state.splice(Number(btn.getAttribute('data-remove-fala')), 1);
+          render();
+        });
       });
-    });
-    container.querySelectorAll('[data-fala-texto]').forEach(area => {
-      area.addEventListener('input', () => {
+      container.querySelectorAll('[data-fala-texto]').forEach(area => {
+        area.addEventListener('input', () => {
+          const idx = Number(area.getAttribute('data-fala-texto'));
+          if (state[idx]) state[idx].texto = area.value;
+        });
+      });
+    }
+    function syncFromDom() {
+      const container = document.getElementById(listId);
+      if (!container) return;
+      container.querySelectorAll('[data-fala-texto]').forEach(area => {
         const idx = Number(area.getAttribute('data-fala-texto'));
-        if (totemFormFalas[idx]) totemFormFalas[idx].texto = area.value;
+        if (state[idx]) state[idx].texto = area.value;
       });
-    });
-  }
-
-  function syncTotemFalasFromDom() {
-    document.querySelectorAll('#totem-npc-falas [data-fala-texto]').forEach(area => {
-      const idx = Number(area.getAttribute('data-fala-texto'));
-      if (totemFormFalas[idx]) totemFormFalas[idx].texto = area.value;
-    });
-  }
-
-  const btnAddFala = document.getElementById('btn-add-fala');
-  if (btnAddFala) {
-    btnAddFala.addEventListener('click', () => {
-      syncTotemFalasFromDom();
-      totemFormFalas.push({ id: `fala${totemFormFalas.length + 1}`, texto: '' });
-      renderTotemFalas();
-    });
-  }
-
-  // ---- Formulário de totem: catálogo de insumos (§15) ----
-
-  function renderTotemInsumos() {
-    const container = document.getElementById('totem-insumos-list');
-    if (!container) return;
-    container.innerHTML = totemFormInsumos.map((item, i) => `
-      <div class="totem-insumo-row" data-insumo-index="${i}">
-        <div class="totem-insumo-row-header">
-          <span>Item ${i + 1}</span>
-          <button type="button" class="row-remove-btn" data-remove-insumo="${i}">Remover</button>
-        </div>
-        <div class="totem-insumo-row-fields">
-          <label class="totem-insumo-field">
-            <span>Tipo</span>
-            <select class="form-select" data-insumo-field="tipo" data-index="${i}">
-              ${TIPOS_INSUMO.map(t => `<option value="${t}" ${item.tipo === t ? 'selected' : ''}>${TIPO_INSUMO_LABEL[t]}</option>`).join('')}
-            </select>
-          </label>
-          <label class="totem-insumo-field">
-            <span>Onde aparece</span>
-            <select class="form-select" data-insumo-field="visibilidade" data-index="${i}">
-              <option value="${VISIBILIDADE_INSUMO.INTERNO}" ${item.visibilidade === VISIBILIDADE_INSUMO.INTERNO ? 'selected' : ''}>Só internamente</option>
-              <option value="${VISIBILIDADE_INSUMO.MAPA_PUBLICO}" ${item.visibilidade === VISIBILIDADE_INSUMO.MAPA_PUBLICO ? 'selected' : ''}>No mapa público</option>
-            </select>
-          </label>
-          <label class="totem-insumo-field" style="grid-column: 1 / -1">
-            <span>Rótulo</span>
-            <input type="text" class="form-input" data-insumo-field="rotulo" data-index="${i}" value="${escapeHtml(item.rotulo || '')}" placeholder="Ex: Foto do vale" />
-          </label>
-          <label class="percurso-toggle" style="font-size:0.76rem">
-            <input type="checkbox" data-insumo-field="obrigatorio" data-index="${i}" ${item.obrigatorio ? 'checked' : ''} />
-            <span>Obrigatório</span>
-          </label>
-        </div>
-        <div class="totem-insumo-row-extra">
-          <label class="totem-insumo-field">
-            <span>Grupo</span>
-            <input type="text" class="form-input" data-insumo-field="grupoId" data-index="${i}" value="${escapeHtml(item.grupoId || '')}" placeholder="Opcional" />
-          </label>
-          <label class="totem-insumo-field">
-            <span>Mínimo no grupo</span>
-            <input type="number" class="form-input" min="1" data-insumo-field="minimoGrupo" data-index="${i}" value="${item.minimoGrupo ?? ''}" placeholder="Ex: 1" />
-          </label>
-          ${item.tipo === 'gps' ? `
-          <label class="totem-insumo-field">
-            <span>Raio em metros</span>
-            <input type="number" class="form-input" min="1" data-insumo-field="raioMetros" data-index="${i}" value="${item.validacao?.distanciaMaximaM ?? 80}" />
-          </label>
-          <label class="percurso-toggle" style="font-size:0.76rem">
-            <input type="checkbox" data-insumo-field="gpsObrigatorio" data-index="${i}" ${item.validacao?.gpsObrigatorio ? 'checked' : ''} />
-            <span>GPS obrigatório</span>
-          </label>` : ''}
-        </div>
-      </div>
-    `).join('') || '<p class="figital-empty-state">Nenhum item ainda. Adicione foto, áudio, texto ou GPS.</p>';
-
-    container.querySelectorAll('[data-remove-insumo]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        syncTotemInsumosFromDom();
-        const idx = Number(btn.getAttribute('data-remove-insumo'));
-        totemFormInsumos.splice(idx, 1);
-        renderTotemInsumos();
+    }
+    function set(falas) {
+      state.length = 0;
+      (falas || []).forEach(f => state.push({ ...f }));
+      render();
+    }
+    function get() {
+      syncFromDom();
+      return state.map(f => ({ ...f }));
+    }
+    const addBtn = document.getElementById(addBtnId);
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        syncFromDom();
+        state.push({ id: `fala${state.length + 1}`, texto: '' });
+        render();
       });
-    });
-    container.querySelectorAll('[data-insumo-field="tipo"]').forEach(sel => {
-      sel.addEventListener('change', () => {
-        syncTotemInsumosFromDom();
-        renderTotemInsumos(); // tipo mudou: re-render para mostrar/esconder campos de GPS
+    }
+    return { render, syncFromDom, set, get };
+  }
+
+  // ---- Construtor reutilizável: catálogo de insumos "O que coletar" (§15) ----
+
+  function createInsumosBuilder({ listId, addBtnId }) {
+    const state = [];
+    function render() {
+      const container = document.getElementById(listId);
+      if (!container) return;
+      container.innerHTML = state.map((item, i) => `
+        <div class="totem-insumo-row" data-insumo-index="${i}">
+          <div class="totem-insumo-row-header">
+            <span>Item ${i + 1}</span>
+            <button type="button" class="row-remove-btn" data-remove-insumo="${i}">Remover</button>
+          </div>
+          <div class="totem-insumo-row-fields">
+            <label class="totem-insumo-field">
+              <span>Tipo</span>
+              <select class="form-select" data-insumo-field="tipo" data-index="${i}">
+                ${TIPOS_INSUMO.map(t => `<option value="${t}" ${item.tipo === t ? 'selected' : ''}>${TIPO_INSUMO_LABEL[t]}</option>`).join('')}
+              </select>
+            </label>
+            <label class="totem-insumo-field">
+              <span>Onde aparece</span>
+              <select class="form-select" data-insumo-field="visibilidade" data-index="${i}">
+                <option value="${VISIBILIDADE_INSUMO.INTERNO}" ${item.visibilidade === VISIBILIDADE_INSUMO.INTERNO ? 'selected' : ''}>Só internamente</option>
+                <option value="${VISIBILIDADE_INSUMO.MAPA_PUBLICO}" ${item.visibilidade === VISIBILIDADE_INSUMO.MAPA_PUBLICO ? 'selected' : ''}>No mapa público</option>
+              </select>
+            </label>
+            <label class="totem-insumo-field" style="grid-column: 1 / -1">
+              <span>Rótulo</span>
+              <input type="text" class="form-input" data-insumo-field="rotulo" data-index="${i}" value="${escapeHtml(item.rotulo || '')}" placeholder="Ex: Foto do vale" />
+            </label>
+            <label class="percurso-toggle" style="font-size:0.76rem">
+              <input type="checkbox" data-insumo-field="obrigatorio" data-index="${i}" ${item.obrigatorio ? 'checked' : ''} />
+              <span>Obrigatório</span>
+            </label>
+          </div>
+          <div class="totem-insumo-row-extra">
+            <label class="totem-insumo-field">
+              <span>Grupo</span>
+              <input type="text" class="form-input" data-insumo-field="grupoId" data-index="${i}" value="${escapeHtml(item.grupoId || '')}" placeholder="Opcional" />
+            </label>
+            <label class="totem-insumo-field">
+              <span>Mínimo no grupo</span>
+              <input type="number" class="form-input" min="1" data-insumo-field="minimoGrupo" data-index="${i}" value="${item.minimoGrupo ?? ''}" placeholder="Ex: 1" />
+            </label>
+            ${item.tipo === 'gps' ? `
+            <label class="totem-insumo-field">
+              <span>Raio em metros</span>
+              <input type="number" class="form-input" min="1" data-insumo-field="raioMetros" data-index="${i}" value="${item.validacao?.distanciaMaximaM ?? 80}" />
+            </label>
+            <label class="percurso-toggle" style="font-size:0.76rem">
+              <input type="checkbox" data-insumo-field="gpsObrigatorio" data-index="${i}" ${item.validacao?.gpsObrigatorio ? 'checked' : ''} />
+              <span>GPS obrigatório</span>
+            </label>` : ''}
+          </div>
+        </div>
+      `).join('') || '<p class="figital-empty-state">Nenhum item ainda. Adicione foto, áudio, texto ou GPS.</p>';
+
+      container.querySelectorAll('[data-remove-insumo]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          syncFromDom();
+          state.splice(Number(btn.getAttribute('data-remove-insumo')), 1);
+          render();
+        });
       });
-    });
-    container.querySelectorAll('[data-insumo-field]').forEach(el => {
-      if (el.getAttribute('data-insumo-field') === 'tipo') return;
-      el.addEventListener('input', () => syncTotemInsumosFromDom());
-      el.addEventListener('change', () => syncTotemInsumosFromDom());
-    });
+      container.querySelectorAll('[data-insumo-field="tipo"]').forEach(sel => {
+        sel.addEventListener('change', () => {
+          syncFromDom();
+          render(); // tipo mudou: re-render para mostrar/esconder campos de GPS
+        });
+      });
+      container.querySelectorAll('[data-insumo-field]').forEach(el => {
+        if (el.getAttribute('data-insumo-field') === 'tipo') return;
+        el.addEventListener('input', () => syncFromDom());
+        el.addEventListener('change', () => syncFromDom());
+      });
+    }
+    function syncFromDom() {
+      const container = document.getElementById(listId);
+      if (!container) return;
+      state.forEach((item, i) => {
+        const row = container.querySelector(`[data-insumo-index="${i}"]`);
+        if (!row) return;
+        const tipoEl = row.querySelector('[data-insumo-field="tipo"]');
+        const visEl = row.querySelector('[data-insumo-field="visibilidade"]');
+        const rotuloEl = row.querySelector('[data-insumo-field="rotulo"]');
+        const obrigEl = row.querySelector('[data-insumo-field="obrigatorio"]');
+        const grupoEl = row.querySelector('[data-insumo-field="grupoId"]');
+        const minGrupoEl = row.querySelector('[data-insumo-field="minimoGrupo"]');
+        const raioEl = row.querySelector('[data-insumo-field="raioMetros"]');
+        const gpsObrigEl = row.querySelector('[data-insumo-field="gpsObrigatorio"]');
+        if (tipoEl) item.tipo = tipoEl.value;
+        if (visEl) item.visibilidade = visEl.value;
+        if (rotuloEl) item.rotulo = rotuloEl.value;
+        if (obrigEl) item.obrigatorio = obrigEl.checked;
+        item.grupoId = grupoEl?.value ? grupoEl.value.trim() : null;
+        item.minimoGrupo = minGrupoEl?.value ? Number(minGrupoEl.value) : null;
+        if (item.tipo === 'gps') {
+          item.validacao = {
+            distanciaMaximaM: raioEl?.value ? Number(raioEl.value) : 80,
+            gpsObrigatorio: !!gpsObrigEl?.checked
+          };
+        }
+      });
+    }
+    function set(itens) {
+      state.length = 0;
+      (itens || []).forEach(it => state.push({ ...it, validacao: { ...(it.validacao || {}) } }));
+      render();
+    }
+    function get() {
+      syncFromDom();
+      return state.map(it => createItemInsumo(it));
+    }
+    const addBtn = document.getElementById(addBtnId);
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        syncFromDom();
+        state.push(createItemInsumo({ tipo: 'foto' }));
+        render();
+      });
+    }
+    return { render, syncFromDom, set, get };
   }
 
-  function syncTotemInsumosFromDom() {
-    const container = document.getElementById('totem-insumos-list');
-    if (!container) return;
-    totemFormInsumos.forEach((item, i) => {
-      const row = container.querySelector(`[data-insumo-index="${i}"]`);
-      if (!row) return;
-      const tipoEl = row.querySelector('[data-insumo-field="tipo"]');
-      const visEl = row.querySelector('[data-insumo-field="visibilidade"]');
-      const rotuloEl = row.querySelector('[data-insumo-field="rotulo"]');
-      const obrigEl = row.querySelector('[data-insumo-field="obrigatorio"]');
-      const grupoEl = row.querySelector('[data-insumo-field="grupoId"]');
-      const minGrupoEl = row.querySelector('[data-insumo-field="minimoGrupo"]');
-      const raioEl = row.querySelector('[data-insumo-field="raioMetros"]');
-      const gpsObrigEl = row.querySelector('[data-insumo-field="gpsObrigatorio"]');
-      if (tipoEl) item.tipo = tipoEl.value;
-      if (visEl) item.visibilidade = visEl.value;
-      if (rotuloEl) item.rotulo = rotuloEl.value;
-      if (obrigEl) item.obrigatorio = obrigEl.checked;
-      item.grupoId = grupoEl?.value ? grupoEl.value.trim() : null;
-      item.minimoGrupo = minGrupoEl?.value ? Number(minGrupoEl.value) : null;
-      if (item.tipo === 'gps') {
-        item.validacao = {
-          distanciaMaximaM: raioEl?.value ? Number(raioEl.value) : 80,
-          gpsObrigatorio: !!gpsObrigEl?.checked
-        };
-      }
-    });
+  const totemFalasBuilder = createFalasBuilder({ listId: 'totem-npc-falas', addBtnId: 'btn-add-fala' });
+  const missaoFalasBuilder = createFalasBuilder({ listId: 'missao-npc-falas', addBtnId: 'btn-add-fala-missao' });
+  const missaoInsumosBuilder = createInsumosBuilder({ listId: 'missao-insumos-list', addBtnId: 'btn-add-insumo-missao' });
+  missaoInsumosBuilder.set([]);
+
+  // ---- Toggles: NPC opcional (totem/missão) e prazo opcional (missão) ----
+
+  function bindNpcToggle(toggleId, sectionId, falasBuilder) {
+    const toggle = document.getElementById(toggleId);
+    const section = document.getElementById(sectionId);
+    if (!toggle || !section) return;
+    const sync = () => {
+      section.hidden = !toggle.checked;
+      if (toggle.checked) falasBuilder.render();
+    };
+    toggle.addEventListener('change', sync);
+    sync();
+  }
+  bindNpcToggle('toggle-npc-totem', 'totem-npc-section', totemFalasBuilder);
+  bindNpcToggle('toggle-npc-missao', 'missao-npc-section', missaoFalasBuilder);
+
+  const togglePrazoMissao = document.getElementById('toggle-prazo-missao');
+  const prazoMissaoWrapper = document.getElementById('prazo-missao-wrapper');
+  if (togglePrazoMissao && prazoMissaoWrapper) {
+    const syncPrazo = () => { prazoMissaoWrapper.hidden = !togglePrazoMissao.checked; };
+    togglePrazoMissao.addEventListener('change', syncPrazo);
+    syncPrazo();
   }
 
-  const btnAddInsumo = document.getElementById('btn-add-insumo');
-  if (btnAddInsumo) {
-    btnAddInsumo.addEventListener('click', () => {
-      syncTotemInsumosFromDom();
-      totemFormInsumos.push(createItemInsumo({ tipo: 'foto' }));
-      renderTotemInsumos();
-    });
+  // Reset dos campos estruturados da missão ao abrir o modal para uma nova missão.
+  function resetMissaoForm() {
+    missaoInsumosBuilder.set([]);
+    missaoFalasBuilder.set([]);
+    const toggleNpc = document.getElementById('toggle-npc-missao');
+    const npcSection = document.getElementById('missao-npc-section');
+    if (toggleNpc) toggleNpc.checked = false;
+    if (npcSection) npcSection.hidden = true;
+    const togglePrazo = document.getElementById('toggle-prazo-missao');
+    const prazoWrapper = document.getElementById('prazo-missao-wrapper');
+    if (togglePrazo) togglePrazo.checked = true;
+    if (prazoWrapper) prazoWrapper.hidden = false;
+    const recompensa = document.getElementById('input-recompensa-missao');
+    if (recompensa) recompensa.value = '';
   }
 
-  // ---- Wizard de 3 etapas do totem ----
-
-  const TOTEM_STEP_COUNT = 3;
-  let totemStep = 1;
+  // ---- Formulário do totem (ponto simples: nome, tipo, descrição, NPC opcional) ----
 
   function getTotemPapel() {
     return document.querySelector('input[name="papel-totem"]:checked')?.value || PAPEL_TOTEM.INTERMEDIARIO;
@@ -2608,7 +2759,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const radio = document.querySelector(`input[name="papel-totem"][value="${papel}"]`);
     if (radio) radio.checked = true;
     updateTotemPapelHelper();
-    updateTotemMissaoIntro();
   }
 
   function setFormError(id, show) {
@@ -2620,143 +2770,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const helper = document.getElementById('totem-papel-helper');
     if (!helper) return;
     helper.textContent = getTotemPapel() === PAPEL_TOTEM.INICIO
-      ? 'Só pode haver um início neste percurso. A missão no próximo passo é opcional.'
+      ? 'Só pode haver um totem de início neste percurso.'
       : 'Todo percurso precisa de um totem de início.';
   }
 
-  function updateTotemMissaoIntro() {
-    const intro = document.getElementById('totem-missao-intro');
-    if (!intro) return;
-    intro.textContent = getTotemPapel() === PAPEL_TOTEM.INICIO
-      ? 'A missão é opcional. Sem ela, este ponto só abre a jornada.'
-      : 'Peça algo neste ponto — uma foto, um texto, um áudio ou um check-in.';
-  }
-
-  function updateTotemWizardChrome() {
-    const backBtn = document.getElementById('btn-totem-back');
-    if (!btnSubmitModal) return;
-    if (currentActiveTab !== 'totem') {
-      if (backBtn) backBtn.classList.add('hidden');
-      if (btnCancelModal) btnCancelModal.classList.remove('hidden');
-      return;
-    }
-    if (totemStep === 1) {
-      if (backBtn) backBtn.classList.add('hidden');
-      if (btnCancelModal) btnCancelModal.classList.remove('hidden');
-      btnSubmitModal.textContent = 'Continuar';
-    } else if (totemStep < TOTEM_STEP_COUNT) {
-      if (backBtn) backBtn.classList.remove('hidden');
-      if (btnCancelModal) btnCancelModal.classList.add('hidden');
-      btnSubmitModal.textContent = 'Continuar';
-    } else {
-      if (backBtn) backBtn.classList.remove('hidden');
-      if (btnCancelModal) btnCancelModal.classList.add('hidden');
-      btnSubmitModal.textContent = editingTotemId ? 'Salvar totem' : 'Criar totem';
-    }
-  }
-
-  function setTotemStep(step) {
-    totemStep = Math.min(TOTEM_STEP_COUNT, Math.max(1, step));
-    document.querySelectorAll('[data-totem-step-panel]').forEach(panel => {
-      const n = Number(panel.getAttribute('data-totem-step-panel'));
-      panel.hidden = n !== totemStep;
-    });
-    document.querySelectorAll('[data-totem-step]').forEach(btn => {
-      const n = Number(btn.getAttribute('data-totem-step'));
-      btn.classList.toggle('is-active', n === totemStep);
-      btn.classList.toggle('is-done', n < totemStep);
-      if (n === totemStep) btn.setAttribute('aria-current', 'step');
-      else btn.removeAttribute('aria-current');
-    });
-    updateTotemMissaoIntro();
-    updateTotemWizardChrome();
-    const panel = document.querySelector(`[data-totem-step-panel="${totemStep}"]`);
-    const first = panel?.querySelector('input:not([type="radio"]):not([type="checkbox"]), textarea, select');
-    if (first && creationModal?.classList.contains('open')) {
-      first.focus();
-    }
-  }
-
-  function validateTotemStep(step) {
-    if (step === 1) {
-      const nome = (document.getElementById('input-nome-totem')?.value || '').trim();
-      const ok = nome.length > 0;
-      setFormError('totem-nome-error', !ok);
-      if (!ok) {
-        document.getElementById('input-nome-totem')?.focus();
-        return false;
-      }
-      return true;
-    }
-    if (step === 3) {
-      const precisaMissao = totemPrecisaDeMissao({ papel: getTotemPapel() });
-      const titulo = (document.getElementById('input-titulo-missao-totem')?.value || '').trim();
-      const ok = !precisaMissao || titulo.length > 0;
-      setFormError('totem-missao-error', !ok);
-      if (!ok) {
-        document.getElementById('input-titulo-missao-totem')?.focus();
-        return false;
-      }
-      return true;
-    }
-    return true;
-  }
-
-  document.querySelectorAll('[data-totem-step]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = Number(btn.getAttribute('data-totem-step'));
-      if (target === totemStep) return;
-      if (target < totemStep) {
-        setTotemStep(target);
-        return;
-      }
-      for (let s = totemStep; s < target; s += 1) {
-        if (!validateTotemStep(s)) return;
-      }
-      setTotemStep(target);
-    });
-  });
-
-  const btnTotemBack = document.getElementById('btn-totem-back');
-  if (btnTotemBack) {
-    btnTotemBack.addEventListener('click', () => {
-      if (totemStep > 1) setTotemStep(totemStep - 1);
-    });
+  function validateTotemNome() {
+    const nome = (document.getElementById('input-nome-totem')?.value || '').trim();
+    const ok = nome.length > 0;
+    setFormError('totem-nome-error', !ok);
+    if (!ok) document.getElementById('input-nome-totem')?.focus();
+    return ok;
   }
 
   document.querySelectorAll('input[name="papel-totem"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      updateTotemPapelHelper();
-      updateTotemMissaoIntro();
-    });
+    radio.addEventListener('change', updateTotemPapelHelper);
   });
 
   function resetTotemForm(shapeRecord) {
     const percurso = shapeRecord ? getPercursoForShape(shapeRecord) : null;
     const nomeInput = document.getElementById('input-nome-totem');
+    const descricaoInput = document.getElementById('input-descricao-totem');
     const npcNomeInput = document.getElementById('input-npc-nome');
-    const tituloMissaoInput = document.getElementById('input-titulo-missao-totem');
-    const instrucaoInput = document.getElementById('input-instrucao-npc-totem');
-    const ordemInput = document.getElementById('input-ordem-missao-totem');
-    const recompensaInput = document.getElementById('input-recompensa-parcial-totem');
-    const obrigatoriaInput = document.getElementById('input-obrigatoria-missao-totem');
+    const toggleNpc = document.getElementById('toggle-npc-totem');
+    const npcSection = document.getElementById('totem-npc-section');
 
     if (nomeInput) nomeInput.value = percurso ? nextTotemNome(percurso) : 'Totem 1';
     const temInicio = percurso ? (percurso.totens || []).some(t => t.papel === PAPEL_TOTEM.INICIO) : false;
     setTotemPapel(temInicio ? PAPEL_TOTEM.INTERMEDIARIO : PAPEL_TOTEM.INICIO);
     setFormError('totem-nome-error', false);
-    setFormError('totem-missao-error', false);
+    if (descricaoInput) descricaoInput.value = '';
     if (npcNomeInput) npcNomeInput.value = 'Guardiã do território';
-    if (tituloMissaoInput) tituloMissaoInput.value = '';
-    if (instrucaoInput) instrucaoInput.value = '';
-    if (ordemInput) ordemInput.value = String(percurso ? (percurso.totens || []).length + 1 : 1);
-    if (recompensaInput) recompensaInput.value = '';
-    if (obrigatoriaInput) obrigatoriaInput.checked = true;
+    if (toggleNpc) toggleNpc.checked = false;
+    if (npcSection) npcSection.hidden = true;
 
-    totemFormFalas = [{ id: 'intro', texto: '' }];
-    totemFormInsumos = [];
-    renderTotemFalas();
-    renderTotemInsumos();
+    totemFalasBuilder.set([]);
     updateTotemPapelHelper();
   }
 
@@ -2773,29 +2820,21 @@ document.addEventListener('DOMContentLoaded', () => {
     placeState.latlng = null;
 
     const nomeInput = document.getElementById('input-nome-totem');
+    const descricaoInput = document.getElementById('input-descricao-totem');
     const npcNomeInput = document.getElementById('input-npc-nome');
-    const tituloMissaoInput = document.getElementById('input-titulo-missao-totem');
-    const instrucaoInput = document.getElementById('input-instrucao-npc-totem');
-    const ordemInput = document.getElementById('input-ordem-missao-totem');
-    const recompensaInput = document.getElementById('input-recompensa-parcial-totem');
-    const obrigatoriaInput = document.getElementById('input-obrigatoria-missao-totem');
+    const toggleNpc = document.getElementById('toggle-npc-totem');
+    const npcSection = document.getElementById('totem-npc-section');
 
     if (nomeInput) nomeInput.value = totem.nome;
     setTotemPapel(totem.papel);
     setFormError('totem-nome-error', false);
-    setFormError('totem-missao-error', false);
-    if (npcNomeInput) npcNomeInput.value = totem.roteiroNpc?.nome || '';
-    if (tituloMissaoInput) tituloMissaoInput.value = totem.missao?.titulo || '';
-    if (instrucaoInput) instrucaoInput.value = totem.missao?.instrucaoNpc || '';
-    if (ordemInput) ordemInput.value = String(totem.missao?.ordem ?? 1);
-    if (recompensaInput) recompensaInput.value = totem.missao?.recompensaParcial || '';
-    if (obrigatoriaInput) obrigatoriaInput.checked = totem.missao?.obrigatoria ?? true;
+    if (descricaoInput) descricaoInput.value = totem.descricao || '';
 
-    totemFormFalas = (totem.roteiroNpc?.falas || []).map(f => ({ ...f }));
-    if (!totemFormFalas.length) totemFormFalas = [{ id: 'intro', texto: '' }];
-    totemFormInsumos = (totem.missao?.catalogoInsumos || []).map(i => ({ ...i, validacao: { ...i.validacao } }));
-    renderTotemFalas();
-    renderTotemInsumos();
+    const temNpc = !!totem.roteiroNpc;
+    if (toggleNpc) toggleNpc.checked = temNpc;
+    if (npcSection) npcSection.hidden = !temNpc;
+    if (npcNomeInput) npcNomeInput.value = totem.roteiroNpc?.nome || 'Guardiã do território';
+    totemFalasBuilder.set(totem.roteiroNpc?.falas || []);
     updateTotemPapelHelper();
 
     if (modalTitleEl) modalTitleEl.textContent = `Editar totem — ${totem.nome}`;
@@ -2806,26 +2845,18 @@ document.addEventListener('DOMContentLoaded', () => {
   window.editarTotem = openTotemEditor;
 
   function submitTotemForm(centerFallback) {
-    syncTotemFalasFromDom();
-    syncTotemInsumosFromDom();
-
-    if (!validateTotemStep(1)) {
-      setTotemStep(1);
-      return false;
-    }
-    if (!validateTotemStep(3)) {
-      setTotemStep(3);
-      return false;
-    }
+    if (!validateTotemNome()) return false;
 
     const nome = (document.getElementById('input-nome-totem')?.value || '').trim() || 'Totem';
     const papel = getTotemPapel();
-    const npcNome = document.getElementById('input-npc-nome')?.value || 'Guardiã do território';
-    const tituloMissao = document.getElementById('input-titulo-missao-totem')?.value || '';
-    const instrucaoNpc = document.getElementById('input-instrucao-npc-totem')?.value || '';
-    const ordem = Number(document.getElementById('input-ordem-missao-totem')?.value || 1);
-    const recompensaParcial = document.getElementById('input-recompensa-parcial-totem')?.value || '';
-    const obrigatoria = !!document.getElementById('input-obrigatoria-missao-totem')?.checked;
+    const descricao = document.getElementById('input-descricao-totem')?.value || '';
+    const temNpc = !!document.getElementById('toggle-npc-totem')?.checked;
+    const roteiroNpc = temNpc
+      ? {
+          nome: document.getElementById('input-npc-nome')?.value || 'Guardiã do território',
+          falas: totemFalasBuilder.get()
+        }
+      : null;
 
     const isEditing = !!editingTotemId;
     const existingEntry = isEditing ? totemEntries.get(editingTotemId) : null;
@@ -2853,28 +2884,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (papel === PAPEL_TOTEM.INICIO) {
       const outroInicio = (percurso.totens || []).find(t => t.papel === PAPEL_TOTEM.INICIO && t.id !== editingTotemId);
       if (outroInicio) {
-        setTotemStep(1);
-        showToast(`Este percurso já tem um totem de início ("${outroInicio.nome}"). Troque o papel ou edite o outro.`);
+        showToast(`Este percurso já tem um totem de início ("${outroInicio.nome}"). Troque o tipo ou edite o outro.`);
         return false;
       }
     }
 
     const lat = isEditing ? existingEntry.data.lat : (centerFallback?.lat ?? map.getCenter().lat);
     const lng = isEditing ? existingEntry.data.lng : (centerFallback?.lng ?? map.getCenter().lng);
-
-    const missaoNecessaria = totemPrecisaDeMissao({ papel });
-    let missao = null;
-    if (tituloMissao || instrucaoNpc || totemFormInsumos.length || missaoNecessaria) {
-      missao = createMissaoTotem({
-        id: existingEntry?.data.missao?.id,
-        titulo: tituloMissao,
-        instrucaoNpc,
-        ordem,
-        obrigatoria,
-        recompensaParcial,
-        catalogoInsumos: totemFormInsumos.map(i => createItemInsumo(i))
-      });
-    }
 
     const totemData = createTotem({
       id: isEditing ? editingTotemId : undefined,
@@ -2884,11 +2900,10 @@ document.addEventListener('DOMContentLoaded', () => {
       lat,
       lng,
       papel,
-      missao,
-      roteiroNpc: { nome: npcNome, falas: totemFormFalas.map(f => ({ ...f })) },
+      descricao,
+      roteiroNpc,
       qr: existingEntry?.data.qr || null
     });
-    if (missao) missao.totemId = totemData.id;
 
     if (isEditing) {
       Object.assign(existingEntry.data, totemData);
@@ -2909,26 +2924,25 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshFigitalPanel();
     showToast(isEditing ? `Totem "${nome}" atualizado.` : `Totem "${nome}" criado no ponto escolhido.`);
     editingTotemId = null;
-    totemFormFalas = [];
-    totemFormInsumos = [];
+    totemFalasBuilder.set([]);
     return true;
   }
 
   function totemPopupHtml(totem) {
-    const missao = totem.missao;
-    const insumosCount = missao?.catalogoInsumos?.length || 0;
+    const descricao = totem.descricao
+      ? `<p class="card-desc">${escapeHtml(totem.descricao)}</p>`
+      : '<p class="card-desc">Sem descrição ainda.</p>';
+    const npc = totem.roteiroNpc
+      ? `<div class="card-meta"><div class="card-meta-item">Personagem: <strong>${escapeHtml(totem.roteiroNpc.nome || '—')}</strong></div></div>`
+      : '';
     return `
       <div class="context-card context-card-simple">
         <div class="card-header-badge">
           <span class="card-type-tag totem">Totem · ${escapeHtml(PAPEL_TOTEM_LABEL[totem.papel] || totem.papel)}</span>
         </div>
         <h3 class="card-title">${escapeHtml(totem.nome)}</h3>
-        ${missao?.titulo ? `<p class="card-desc"><strong>Missão:</strong> ${escapeHtml(missao.titulo)}</p>` : '<p class="card-desc">Sem missão de insumo (abre a jornada).</p>'}
-        <div class="card-meta">
-          <div class="card-meta-item">NPC: <strong>${escapeHtml(totem.roteiroNpc?.nome || '—')}</strong></div>
-          <div class="card-meta-item">Insumos: <strong>${insumosCount}</strong></div>
-          ${missao ? `<div class="card-meta-item">Recompensa parcial: <strong>${escapeHtml(missao.recompensaParcial || '—')}</strong></div>` : ''}
-        </div>
+        ${descricao}
+        ${npc}
         <div class="card-action-group">
           <button class="card-btn card-btn-primary" type="button" onclick="editarTotem('${escapeJsString(totem.id)}')">Editar totem</button>
           <button class="card-btn card-btn-outline-amber" type="button" onclick="gerarQrTotem('${escapeJsString(totem.id)}')">Gerar arte de QR</button>
@@ -2952,6 +2966,32 @@ document.addEventListener('DOMContentLoaded', () => {
     marker.setPopupContent(totemPopupHtml(data));
     if (marker.isPopupOpen()) marker.getPopup()?.update();
   }
+
+  window.gerarQrMissao = async function(missaoId) {
+    const entry = parentById.get(missaoId);
+    if (!entry || entry.kind !== 'missao') return;
+    const missao = entry.data;
+    const assinatura = gerarAssinaturaMock(MAPA_ID, missaoId);
+    const url = gerarUrlQrMissao({ mapaId: MAPA_ID, missaoId, assinatura });
+    missao.qr = { url, assinatura, geradoEm: new Date().toISOString() };
+    try {
+      const dataUrl = await QRCode.toDataURL(url, { width: 260, margin: 1 });
+      const target = document.getElementById(`qr-preview-missao-${missaoId}`);
+      const nomeArquivo = `qr-missao-${missao.titulo}`.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      if (target) {
+        target.innerHTML = `
+          <div class="qr-preview-box">
+            <img src="${dataUrl}" alt="QR da missão ${escapeHtml(missao.titulo)}" />
+            <span class="qr-preview-url">${escapeHtml(url)}</span>
+            <a class="btn-secondary" download="${nomeArquivo}.png" href="${dataUrl}">Baixar PNG</a>
+          </div>
+        `;
+      }
+      showToast(`QR gerado para "${missao.titulo}".`);
+    } catch (err) {
+      showToast('Não foi possível gerar o QR agora.');
+    }
+  };
 
   window.gerarQrTotem = async function(totemId) {
     const entry = totemEntries.get(totemId);
@@ -3195,7 +3235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nome: data.nome,
         papel: data.papel,
         percursoId: data.percursoId,
-        missao: data.missao?.titulo || null
+        descricao: data.descricao || ''
       },
       geometry: { type: 'Point', coordinates: [data.lng, data.lat] }
     }));
@@ -3225,12 +3265,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnExportCsv = document.getElementById('btn-export-csv');
   if (btnExportCsv) {
     btnExportCsv.addEventListener('click', () => {
-      const rows = [['id', 'nome', 'papel', 'percurso', 'lat', 'lng', 'missao', 'recompensaParcial']];
+      const rows = [['id', 'nome', 'papel', 'percurso', 'lat', 'lng', 'descricao']];
       totemEntries.forEach(({ data }) => {
         const percurso = percursosById.get(data.percursoId);
         rows.push([
           data.id, data.nome, data.papel, percurso?.titulo || '', data.lat, data.lng,
-          data.missao?.titulo || '', data.missao?.recompensaParcial || ''
+          data.descricao || ''
         ]);
       });
       const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
