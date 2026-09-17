@@ -145,11 +145,21 @@
               type="text"
               class="search-input"
               placeholder="Buscar lugares, iniciativas ou pessoas..."
+              readonly
+              aria-label="Buscar (em breve)"
+              title="Busca ainda não disponível nesta versão"
             />
+            <span class="soon-pill" aria-hidden="true">Em breve</span>
           </div>
 
           <div class="top-bar-end">
-            <button class="btn-icon notification-btn" title="Notificações">
+            <button
+              class="btn-icon notification-btn is-soon"
+              type="button"
+              aria-disabled="true"
+              aria-label="Notificações (em breve)"
+              title="Notificações ainda não disponíveis nesta versão"
+            >
               <span class="ds-icon ds-icon-20">
                 <img src="./icons/bell.svg" alt="" width="20" height="20" />
               </span>
@@ -354,18 +364,18 @@
               <span>Desenhar</span>
             </button>
 
-            <button class="tool-btn" data-panel="layers-panel">
-              <span class="ds-icon ds-icon-16">
-                <img src="./icons/layers.svg" alt="" width="16" height="16" />
-              </span>
-              <span>Camadas</span>
-            </button>
-
             <button class="tool-btn" data-panel="filters-panel">
               <span class="ds-icon ds-icon-16">
                 <img src="./icons/filter.svg" alt="" width="16" height="16" />
               </span>
-              <span>Filtros</span>
+              <span>Filtro</span>
+            </button>
+
+            <button class="tool-btn" data-panel="figital-panel">
+              <span class="ds-icon ds-icon-16">
+                <img src="./icons/map.svg" alt="" width="16" height="16" />
+              </span>
+              <span>Painel Figital</span>
             </button>
           </div>
 
@@ -436,6 +446,11 @@
                 <img src="./icons/plus.svg" alt="" width="16" height="16" />
               </span>
             </button>
+            <button type="button" class="shape-action-btn hidden" id="btn-shape-percurso" aria-label="Ficha do percurso" aria-haspopup="dialog" aria-controls="percurso-edit-panel" title="Ficha do percurso">
+              <span class="ds-icon ds-icon-16">
+                <img src="./icons/map.svg" alt="" width="16" height="16" />
+              </span>
+            </button>
             <button type="button" class="shape-action-btn" id="btn-shape-edit" aria-label="Editar">
               <span class="ds-icon ds-icon-16">
                 <img src="./icons/pencil.svg" alt="" width="16" height="16" />
@@ -452,6 +467,12 @@
                   <img src="./icons/sprout.svg" alt="" width="16" height="16" />
                 </span>
                 <span class="tool-flyout-label">Missão</span>
+              </button>
+              <button type="button" class="tool-flyout-item" role="menuitem" data-attach="totem">
+                <span class="ds-icon ds-icon-16">
+                  <img src="./icons/star.svg" alt="" width="16" height="16" />
+                </span>
+                <span class="tool-flyout-label">Totem</span>
               </button>
               <button type="button" class="tool-flyout-item" role="menuitem" data-attach="marcador">
                 <span class="ds-icon ds-icon-16">
@@ -497,14 +518,86 @@
             </div>
           </div>
 
-          <!-- Painel Flutuante de Camadas -->
-          <div class="floating-panel hidden" id="layers-panel">
+          <!-- Ficha do percurso (Fase 1.3) — aparece quando a forma selecionada já tem totens -->
+          <div class="shape-edit-panel percurso-panel hidden" id="percurso-edit-panel" role="dialog" aria-labelledby="percurso-edit-title">
+            <h3 class="shape-edit-title" id="percurso-edit-title">Ficha do percurso</h3>
+            <p class="percurso-geometria-nome" id="percurso-geometria-nome"></p>
+
+            <div id="percurso-status" class="percurso-status"></div>
+
+            <div class="form-group">
+              <label class="form-label" for="percurso-modo">Modo de progresso *</label>
+              <select id="percurso-modo" class="form-select">
+                <option value="sequencial">Sequencial</option>
+                <option value="livre">Livre</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="percurso-recompensa-final">Recompensa final</label>
+              <input type="text" id="percurso-recompensa-final" class="form-input" placeholder="Ex: Insígnia Serra do Vulcão" />
+              <span class="form-helper-text">Liberada só com as missões obrigatórias concluídas (RN-FIG-029).</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="percurso-consentimento">Texto de consentimento</label>
+              <textarea id="percurso-consentimento" class="form-textarea" rows="3" placeholder="Explique para que os insumos serão usados (pesquisa, acervo interno, publicação no mapa)."></textarea>
+            </div>
+
+            <div class="form-group percurso-periodo-group">
+              <label class="form-label">Período (opcional)</label>
+              <div class="filter-date-row">
+                <label class="filter-date-field" for="percurso-periodo-inicio">
+                  <span>De</span>
+                  <input type="date" id="percurso-periodo-inicio" class="filter-date-input" />
+                </label>
+                <label class="filter-date-field" for="percurso-periodo-fim">
+                  <span>Até</span>
+                  <input type="date" id="percurso-periodo-fim" class="filter-date-input" />
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group percurso-toggle-row">
+              <label class="percurso-toggle">
+                <input type="checkbox" id="percurso-ativo" />
+                <span>Percurso ativo</span>
+              </label>
+              <span class="form-helper-text" id="percurso-ativo-helper">Inativo: participantes não iniciam jornada (RN-FIG-007).</span>
+            </div>
+
+            <div class="form-group percurso-toggle-row">
+              <label class="percurso-toggle">
+                <input type="checkbox" id="percurso-replay" />
+                <span>Permitir recomeçar o percurso (replay)</span>
+              </label>
+              <span class="form-helper-text">Só usado quando a jornada com rede existir (Fase 4), mas já fica salvo aqui (RN-FIG-024).</span>
+            </div>
+
+            <div class="percurso-visibilidade-aviso" id="percurso-visibilidade-aviso"></div>
+
+            <div class="form-group">
+              <div class="percurso-totens-header">
+                <label class="form-label">Totens deste percurso</label>
+                <span class="card-tab-badge" id="percurso-totens-count">0</span>
+              </div>
+              <div id="percurso-totens-list" class="percurso-totens-list"></div>
+            </div>
+
+            <div class="shape-edit-footer">
+              <button type="button" class="btn-secondary" id="btn-percurso-cancel">Fechar</button>
+              <button type="button" class="card-btn card-btn-primary" id="btn-percurso-save">Salvar percurso</button>
+            </div>
+          </div>
+
+          <!-- Painel Flutuante de Filtro (camadas + filtros de exibição) -->
+          <div class="floating-panel hidden" id="filters-panel">
             <div class="panel-header-row">
               <div class="panel-title-group">
                 <span class="ds-icon ds-icon-18">
-                  <img src="./icons/layers.svg" alt="" width="18" height="18" />
+                  <img src="./icons/filter.svg" alt="" width="18" height="18" />
                 </span>
-                <span class="panel-title">Camadas do Mapa</span>
+                <span class="panel-title">Filtro</span>
               </div>
               <button class="btn-close-panel" type="button" aria-label="Fechar">
                 <span class="ds-icon ds-icon-14">
@@ -572,6 +665,20 @@
               </li>
               <li class="layer-item">
                 <label class="layer-row">
+                  <input type="checkbox" class="layer-checkbox" data-layer="totens" checked />
+                  <span class="ds-checkbox" aria-hidden="true">
+                    <img src="./icons/check.svg" alt="" width="12" height="12" />
+                  </span>
+                  <span class="layer-badge totem">
+                    <span class="ds-icon ds-icon-16">
+                      <img src="./icons/star.svg" alt="" width="16" height="16" />
+                    </span>
+                  </span>
+                  <span class="layer-label">Totens (Figital)</span>
+                </label>
+              </li>
+              <li class="layer-item">
+                <label class="layer-row">
                   <input type="checkbox" class="layer-checkbox" data-layer="areas" checked />
                   <span class="ds-checkbox" aria-hidden="true">
                     <img src="./icons/check.svg" alt="" width="12" height="12" />
@@ -609,14 +716,10 @@
                 </button>
               </div>
             </div>
-          </div>
-
-          <!-- Painel Flutuante de Filtros -->
-          <div class="floating-panel hidden" id="filters-panel">
-            <div class="panel-header-row">
-              <span class="panel-title panel-title-overline">Filtros de exibição</span>
-            </div>
             <div class="panel-divider"></div>
+            <p class="filter-preview-note" role="note">
+              Pré-visualização — status, categoria e período ainda não alteram o mapa.
+            </p>
             <div class="filter-status-section">
               <p class="filter-section-label">Status da Missão:</p>
               <label class="filter-status-row">
@@ -751,6 +854,87 @@
                 </span>
                 <span><strong>Marcador:</strong> Pontos de atenção ou alertas</span>
               </div>
+              <div class="legend-row">
+                <span class="layer-badge totem">
+                  <span class="ds-icon ds-icon-16">
+                    <img src="./icons/star.svg" alt="" width="16" height="16" />
+                  </span>
+                </span>
+                <span><strong>Totem:</strong> Ponto de jornada Figital com QR</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Painel Flutuante do Mapa Figital (Fase 1.6 e 1.8) -->
+          <div class="floating-panel hidden" id="figital-panel">
+            <div class="panel-header-row">
+              <div class="panel-title-group">
+                <span class="ds-icon ds-icon-18">
+                  <img src="./icons/star.svg" alt="" width="18" height="18" />
+                </span>
+                <span class="panel-title">Painel do mapa · Figital</span>
+              </div>
+              <button class="btn-close-panel" type="button" aria-label="Fechar">
+                <span class="ds-icon ds-icon-14">
+                  <img src="./icons/x.svg" alt="" width="14" height="14" />
+                </span>
+              </button>
+            </div>
+            <div class="panel-divider"></div>
+
+            <div class="figital-panel-section">
+              <p class="section-label">Visibilidade do mapa</p>
+              <div class="map-base-selector" id="mapa-visibilidade-selector">
+                <button type="button" class="base-option active" data-visibilidade="privado">Privado</button>
+                <button type="button" class="base-option" data-visibilidade="publico">Público</button>
+              </div>
+              <p class="form-helper-text" id="mapa-visibilidade-helper">Privado: só quem colabora no mapa vê a geometria e inicia jornada de teste (RN-FIG-006).</p>
+            </div>
+
+            <div class="panel-divider"></div>
+
+            <div class="figital-panel-section">
+              <p class="section-label">Percursos deste mapa</p>
+              <div id="figital-percursos-list" class="figital-percursos-list">
+                <p class="figital-empty-state">Nenhum percurso ainda. Coloque um totem numa trilha ou área para criar o primeiro.</p>
+              </div>
+            </div>
+
+            <div class="panel-divider"></div>
+
+            <div class="figital-panel-section">
+              <p class="section-label">Indicadores (§16.3)</p>
+              <div class="figital-indicadores-grid" id="figital-indicadores">
+                <div class="figital-indicador"><strong id="ind-percursos">0</strong><span>Percursos</span></div>
+                <div class="figital-indicador"><strong id="ind-totens">0</strong><span>Totens</span></div>
+                <div class="figital-indicador"><strong id="ind-jornadas">0</strong><span>Jornadas iniciadas</span></div>
+                <div class="figital-indicador"><strong id="ind-conclusao">—</strong><span>Taxa de conclusão</span></div>
+              </div>
+              <p class="form-helper-text">Sem app do participante ainda (Fase 3), estes números ficam zerados — o painel já existe para a Fase 5 preencher.</p>
+            </div>
+
+            <div class="panel-divider"></div>
+
+            <div class="figital-panel-section">
+              <p class="section-label">Insumos</p>
+              <p class="figital-empty-state">Nenhum insumo recebido ainda.</p>
+            </div>
+
+            <div class="panel-divider"></div>
+
+            <div class="figital-panel-section">
+              <p class="section-label">Moderação de memórias públicas (RN-FIG-035)</p>
+              <p class="figital-empty-state">Fila vazia. Insumos marcados "mapa público" aparecem aqui para aprovação.</p>
+            </div>
+
+            <div class="panel-divider"></div>
+
+            <div class="figital-panel-section figital-export-row">
+              <p class="section-label">Exportar</p>
+              <div class="figital-export-buttons">
+                <button type="button" class="btn-secondary" id="btn-export-geojson">Exportar GeoJSON</button>
+                <button type="button" class="btn-secondary" id="btn-export-csv">Exportar CSV (totens)</button>
+              </div>
             </div>
           </div>
 
@@ -840,6 +1024,10 @@
           <button type="button" class="modal-tab hidden" data-tab="memoria" tabindex="-1">
             <span class="tab-icon"><img src="./icons/camera.svg" alt="" width="16" height="16" /></span>
             Memória
+          </button>
+          <button type="button" class="modal-tab hidden" data-tab="totem" tabindex="-1">
+            <span class="tab-icon"><img src="./icons/star.svg" alt="" width="16" height="16" /></span>
+            Totem
           </button>
           <button type="button" class="modal-tab" data-tab="marcador">
             <span class="tab-icon"><img src="./icons/map-pin.svg" alt="" width="16" height="16" /></span>
@@ -1029,11 +1217,139 @@
                 ></textarea>
               </div>
             </div>
+
+            <!-- 5. ABA TOTEM (Fase 1.2 / 1.4 — Figital) — 3 etapas -->
+            <div class="tab-panel" id="tab-content-totem" style="display: none;">
+              <ol class="totem-stepper" aria-label="Etapas do totem">
+                <li>
+                  <button type="button" class="totem-step-btn is-active" data-totem-step="1" aria-current="step">
+                    <span class="totem-step-index">1</span>
+                    <span class="totem-step-name">Ponto</span>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="totem-step-btn" data-totem-step="2">
+                    <span class="totem-step-index">2</span>
+                    <span class="totem-step-name">Quem fala</span>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="totem-step-btn" data-totem-step="3">
+                    <span class="totem-step-index">3</span>
+                    <span class="totem-step-name">Missão</span>
+                  </button>
+                </li>
+              </ol>
+
+              <div class="totem-step-panel" data-totem-step-panel="1">
+                <p class="tab-description-text">
+                  Este ponto fica na trilha ou área escolhida.
+                </p>
+
+                <div class="form-group">
+                  <label class="form-label" for="input-nome-totem">Nome do totem</label>
+                  <input type="text" id="input-nome-totem" class="form-input" placeholder="Ex: Porta da trilha" maxlength="80" />
+                  <span class="form-error hidden" id="totem-nome-error">Dê um nome a este totem.</span>
+                </div>
+
+                <fieldset class="totem-papel-fieldset">
+                  <legend class="form-label" id="totem-papel-label">Papel na jornada</legend>
+                  <div class="totem-papel-selector" role="radiogroup" aria-labelledby="totem-papel-label">
+                    <label class="totem-papel-option">
+                      <input type="radio" name="papel-totem" value="inicio" />
+                      <span class="totem-papel-option-body">
+                        <strong>Início</strong>
+                        <small>Abre a jornada. Só um por percurso.</small>
+                      </span>
+                    </label>
+                    <label class="totem-papel-option">
+                      <input type="radio" name="papel-totem" value="intermediario" />
+                      <span class="totem-papel-option-body">
+                        <strong>Intermediário</strong>
+                        <small>Parada no caminho, com um pedido.</small>
+                      </span>
+                    </label>
+                    <label class="totem-papel-option">
+                      <input type="radio" name="papel-totem" value="fim" />
+                      <span class="totem-papel-option-body">
+                        <strong>Fim</strong>
+                        <small>Última parada. Encerra a jornada.</small>
+                      </span>
+                    </label>
+                  </div>
+                  <span class="form-helper-text" id="totem-papel-helper">Todo percurso precisa de um totem de início.</span>
+                </fieldset>
+              </div>
+
+              <div class="totem-step-panel" data-totem-step-panel="2" hidden>
+                <p class="tab-description-text">
+                  Quem recebe a pessoa neste ponto.
+                </p>
+
+                <div class="form-group">
+                  <label class="form-label" for="input-npc-nome">Nome de quem fala</label>
+                  <input type="text" id="input-npc-nome" class="form-input" placeholder="Ex: Guardiã da Serra" value="Guardiã do território" />
+                </div>
+
+                <div class="form-group">
+                  <div class="percurso-totens-header">
+                    <label class="form-label" id="totem-falas-label">O que essa pessoa diz</label>
+                    <button type="button" class="btn-link-add" id="btn-add-fala">Adicionar fala</button>
+                  </div>
+                  <div id="totem-npc-falas" class="totem-npc-falas" role="group" aria-labelledby="totem-falas-label"></div>
+                </div>
+              </div>
+
+              <div class="totem-step-panel" data-totem-step-panel="3" hidden>
+                <p class="tab-description-text" id="totem-missao-intro">
+                  Peça algo neste ponto — uma foto, um texto, um áudio ou um check-in.
+                </p>
+
+                <div class="form-group" id="totem-missao-group">
+                  <label class="form-label" for="input-titulo-missao-totem">Título da missão</label>
+                  <input type="text" id="input-titulo-missao-totem" class="form-input" placeholder="Ex: Fotografe o vale" />
+                  <span class="form-error hidden" id="totem-missao-error">Dê um título à missão deste ponto.</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="input-instrucao-npc-totem">O que pedir aqui</label>
+                  <textarea id="input-instrucao-npc-totem" class="form-textarea" rows="3" placeholder="Ex: Fotografe o vale e diga, numa frase, o que mudou na paisagem."></textarea>
+                </div>
+
+                <div class="filter-date-row">
+                  <div class="form-group" style="flex:1">
+                    <label class="form-label" for="input-ordem-missao-totem">Ordem na jornada</label>
+                    <input type="number" id="input-ordem-missao-totem" class="form-input" min="1" value="1" />
+                  </div>
+                  <div class="form-group" style="flex:1">
+                    <label class="form-label" for="input-recompensa-parcial-totem">Recompensa neste ponto</label>
+                    <input type="text" id="input-recompensa-parcial-totem" class="form-input" placeholder="Ex: Insígnia Olhar da Serra" />
+                  </div>
+                </div>
+
+                <label class="percurso-toggle">
+                  <input type="checkbox" id="input-obrigatoria-missao-totem" checked />
+                  <span>Conta para a recompensa final</span>
+                </label>
+
+                <div class="form-group totem-insumos-group">
+                  <div class="percurso-totens-header">
+                    <label class="form-label" id="totem-insumos-label">O que coletar</label>
+                    <button type="button" class="btn-link-add" id="btn-add-insumo">Adicionar item</button>
+                  </div>
+                  <div id="totem-insumos-list" class="totem-insumos-list" role="group" aria-labelledby="totem-insumos-label"></div>
+                  <span class="form-helper-text">Itens no mesmo grupo com mínimo 1: a pessoa escolhe um, como áudio ou texto.</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="modal-footer">
             <button type="button" class="btn-secondary" id="btn-cancel-modal">
               Cancelar
+            </button>
+            <button type="button" class="btn-secondary hidden" id="btn-totem-back">
+              Voltar
             </button>
             <button
               type="submit"

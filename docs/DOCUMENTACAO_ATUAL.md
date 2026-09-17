@@ -2,8 +2,8 @@
 
 **Plataforma:** Território (territorio.ai)
 **Tipo:** Protótipo visual de alta fidelidade (POC)
-**Versão deste documento:** 1.0
-**Data:** 09/09/2026
+**Versão deste documento:** 1.1
+**Data:** 16/09/2026
 **Fonte de verdade do produto como está hoje:** este arquivo
 
 > Sempre que uma funcionalidade for adicionada, alterada ou removida, este documento deve ser atualizado na mesma entrega. Ver `.cursor/rules/atualizar-documentacao-atual.mdc`.
@@ -27,7 +27,8 @@
 13. [Filtros, busca e notificações (estado atual)](#13-filtros-busca-e-notificações-estado-atual)
 14. [Gamificação visível](#14-gamificação-visível)
 15. [Stack experimental (React + API)](#15-stack-experimental-react--api)
-16. [Limitações conscientes](#16-limitações-conscientes)
+16. [Figital — autoria no mapa (Fase 1)](#16-figital--autoria-no-mapa-fase-1)
+17. [Limitações conscientes](#17-limitações-conscientes)
 
 ---
 
@@ -78,9 +79,12 @@ Territorio-map/
     ├── client/                         # interface principal (vanilla + Leaflet)
     │   ├── index.html
     │   ├── src/app.js                  # lógica do mapa e dos fluxos
+    │   ├── src/figital/model.js        # entidades Figital (percurso, totem, missão, insumo) — Fase 1
     │   ├── src/style.css
     │   └── assets/
-    └── server/                         # API experimental de missões (não ligada à UI principal)
+    └── server/
+        ├── index.js                    # API experimental de missões (não ligada à UI principal)
+        └── figital.js                  # API Figital (percursos, totens, manifest) — Fase 1.7, ver §16
 ```
 
 | Parte | Tecnologia | Papel hoje |
@@ -90,6 +94,8 @@ Territorio-map/
 | Tiles | Esri World Imagery + OpenStreetMap | Satélite e mapa vetorial |
 | Dados | Arrays mockados em `app.js` | Missões, mutirões, memórias, marcadores e áreas iniciais |
 | Backend da tela principal | Nenhum | Sem login, sem persistência, sem API |
+| Figital (autoria) | `src/figital/model.js` + `qrcode` (npm) | Percurso, totem, missão de totem e insumo — estado em memória do navegador, ver §16 |
+| Figital (API) | `poc/server/figital.js` (Express, em memória) | Percursos/totens/manifest reais; jornadas/insumos/export como stubs — ver §16 |
 
 ---
 
@@ -115,16 +121,27 @@ Territorio-map/
 | Selecionar / Mover | Split button: selecionar elementos ou pan no mapa |
 | Novo Marcador | Abre sub-barra para posicionar missão, mutirão ou marcador |
 | Desenhar | Abre sub-barra de linha/polígono e cor |
-| Camadas | Painel para ligar/desligar camadas e trocar mapa-base |
-| Filtros | Painel visual de status e categoria (**não aplica filtro no mapa**) |
+| Filtro | Painel único (ex-Camadas + ex-Filtros): liga/desliga camadas, troca mapa-base e mostra status/categoria/período (**status, categoria e período são só visuais; não aplicam filtro no mapa**) |
 
 ### Feedback
 
 Toasts locais (ex.: “Missão criada no ponto escolhido”). Não há barra HUD de alertas da plataforma.
 
----
+### Acessibilidade (foco e movimento)
 
-## 5. Mapa e navegação
+- **Foco por teclado visível:** todos os controles customizados (botões da toolbar, sub-barras, abas do modal, painéis, swatches de cor, links, miniaturas de memória) recebem um anel de foco verde via `:focus-visible`. Os checkboxes e radios com input escondido (camadas, status, tipo de marcador, papel do totem) também mostram o anel quando focados pelo teclado.
+- **Tipo de marcador navegável por teclado:** os radios "Alerta / Ponto de interesse" deixaram de usar `display:none` (que os tirava da ordem de tabulação) e passaram a usar um padrão visualmente oculto, mantendo o clique no card e o foco por teclado.
+- **Movimento reduzido:** com `prefers-reduced-motion: reduce`, as animações e transições (hover dos marcadores, abertura de modal, sub-barras, toasts) são praticamente anuladas.
+
+### Controles ainda não funcionais, agora sinalizados
+
+Os controles que existem só como composição visual passaram a **avisar** que ainda não funcionam, em vez de parecerem ativos:
+
+- **Busca da barra superior:** campo `readonly` com selo "Em breve" e `title` explicando que a busca ainda não está disponível. Continua focável, mas não aceita digitação.
+- **Sino de notificações:** aparência esmaecida (`aria-disabled`), sem hover ativo, com `title` "em breve".
+- **Filtros de status / categoria / período (painel Filtro):** nota de pré-visualização no topo dessas seções — "status, categoria e período ainda não alteram o mapa". As camadas e o mapa-base continuam funcionais.
+
+Nenhum comportamento novo foi ligado; a mudança é só de sinalização/expectativa.
 
 - Centro inicial: lat `-22.784`, lng `-43.342`, zoom `15`.
 - Zoom Leaflet no canto inferior direito (os controles nativos do Leaflet no canto padrão estão desligados).
@@ -140,6 +157,8 @@ Não há carregamento por viewport, cluster de marcadores nem múltiplos mapas.
 ---
 
 ## 6. Camadas e mapa-base
+
+Camadas e mapa-base vivem no mesmo painel flutuante **Filtro** (botão único na toolbar, que antes era dividido em "Camadas" e "Filtros" — ver seção 4).
 
 Camadas **fixas** (não dá para criar, renomear ou excluir camada):
 
@@ -313,10 +332,10 @@ Popup: tipo, descrição, categoria e botão **Adicionar memória**.
 
 | Recurso na interface | Comportamento real |
 |----------------------|--------------------|
-| Painel Filtros → status da missão | Só UI; não esconde/mostra marcadores |
-| Painel Filtros → categoria | Só troca o rótulo do dropdown |
-| Busca da barra superior | Campo sem ação |
-| Sino de notificações | Botão sem ação |
+| Painel Filtro → status da missão | Só UI; não esconde/mostra marcadores. Nota de pré-visualização avisa que não altera o mapa |
+| Painel Filtro → categoria | Só troca o rótulo do dropdown. Coberto pela mesma nota de pré-visualização |
+| Busca da barra superior | Campo `readonly` com selo "Em breve"; não aceita digitação |
+| Sino de notificações | Botão esmaecido (`aria-disabled`) com `title` "em breve" |
 | Painel Legenda | Existe no HTML, sem gatilho na toolbar |
 
 ---
@@ -360,20 +379,65 @@ Endpoints do servidor:
 
 ---
 
-## 16. Limitações conscientes
+## 16. Figital — autoria no mapa (Fase 1)
+
+Entregue conforme `docs/PLANO_IMPLEMENTACAO_FIGITAL.md` / `docs/fases de implementacao/FASE_1_MAPA_FIGITAL.md`. Cobre a autoria no mapa (`poc/client`); o aplicativo do participante ainda não existe (Fases 2–5). Regras de negócio completas em `docs/CAMPANHA_FIGITAL.md`.
+
+### Modelo de dados
+
+`poc/client/src/figital/model.js` define **Percurso**, **Totem**, **Missão de totem** e **Item de insumo**, além de validação (`validarPercurso`) e geração de URL/assinatura de QR. É o mesmo formato que `poc/server/figital.js` expõe pela API.
+
+### Totem na ficha da forma
+
+O **"+"** de uma trilha/área selecionada (`shape-actions`) agora oferece **Missão**, **Totem** e **Marcador**. Totem só entra dentro da geometria selecionada (nunca pelo "Novo Marcador" solto, RN-FIG-041). O editor de totem abre em **3 etapas** no modal: (1) nome e papel na jornada (início, intermediário ou fim), (2) nome de quem fala e falas, (3) missão do totem (título, o que pedir, ordem, recompensa neste ponto, se conta para a recompensa final) e catálogo do que coletar. O mesmo fluxo reabre em modo edição pelo botão "Editar totem" no popup do totem ou pela ficha do percurso.
+
+Validação client-side antes de liberar o percurso: só um totem `inicio` por percurso (RN-FIG-009, bloqueia no submit com toast); totem sempre nasce dentro da geometria (RN-FIG-011, herdado do fluxo "adicionar dentro"); pelo menos um totem além do início (RN-FIG-010, mostrado como pendência na ficha do percurso e no painel, não bloqueia o salvamento).
+
+### Catálogo de insumos
+
+Dentro da etapa "Missão" do editor de totem, lista dinâmica do que coletar (foto, vídeo, áudio, texto, GPS/check-in, formulário, memória) com obrigatoriedade, rótulo, visibilidade (interno/mapa público) e agrupamento opcional (`grupoId` + `minimoGrupo`, para regras como "áudio ou texto"). Insumo `gps` ganha campos extras de raio em metros e obrigatoriedade do GPS.
+
+### Ficha do percurso
+
+Quando a forma selecionada já tem totens, o botão "Ficha do percurso" (ícone de mapa, ao lado de editar/excluir) abre um painel com: modo de progresso, recompensa final, texto de consentimento, período opcional, ativo/inativo, permitir replay, status de prontidão (mesma validação acima) e a lista de totens do percurso com atalhos para editar ou gerar QR.
+
+### QR
+
+Botão "Gerar arte de QR" no popup do totem e na ficha do percurso. Gera PNG via `qrcode` (npm) com a URL `https://{dominio}/m/{mapaId}/t/{totemId}?s={assinatura}` (§14.1); a assinatura é um hash mock local (`gerarAssinaturaMock`) até a Fase 1.7 virar a API real do produto — não é HMAC de produção. Sem exportação em PDF ainda (só PNG).
+
+### Visibilidade e painel do mapa
+
+Novo botão de toolbar "Painel Figital" abre um painel com: alternância de visibilidade do mapa (privado/público, `mapaVisibilidade` em memória, RN-FIG-006), lista de percursos com status pronto/pendente, indicadores (percursos, totens, jornadas — zerados até existir app de participante), lista de insumos e fila de moderação de memórias públicas como telas vazias funcionais (RN-FIG-035, preenchidas só na Fase 5), e exportação GeoJSON/CSV dos totens e geometrias atuais.
+
+### Persistência mínima (`poc/server/figital.js`)
+
+Endpoints reais em memória: `GET/POST /api/mapas/:mapaId/percursos`, `GET/PATCH /api/mapas/:mapaId/percursos/:id`, `GET/POST/PATCH/DELETE /api/mapas/:mapaId/totens`, `GET /api/mapas/:mapaId/percursos/:id/manifest`. Stubs que devolvem dados vazios/mock (contrato, não implementação): `POST /api/jornadas`, `GET /api/jornadas/:id`, `POST /api/jornadas/:id/checkins`, `POST /api/jornadas/:id/insumos`, `POST /api/jornadas/:id/missoes/:id/concluir`, `GET /api/mapas/:mapaId/insumos`, `GET /api/mapas/:mapaId/export`. **A UI principal ainda não chama essa API** — o mapa continua com estado em memória do navegador, como o resto da POC (§16); a API existe para a Fase 2 ter um manifesto real para baixar.
+
+### O que a Fase 1 não cobre
+
+- App do participante (scan, NPC, jornada, insumos de campo) — Fases 2 a 5.
+- QR com HMAC real e verificação online — depende de a API da Fase 1.7 virar o backend de produto.
+- Exportação de QR em PDF.
+- Persistência de verdade (banco) tanto do mapa quanto da API Figital — hoje os dois são em memória e se perdem ao recarregar/reiniciar.
+- Autenticação e papéis reais controlando quem vê o "+" de totem (RN-FIG-003) — na POC, qualquer pessoa que abre o mapa consegue.
+
+---
+
+## 17. Limitações conscientes
 
 O protótipo atual **não implementa**:
 
-- Autenticação, papéis (Owner, Editor, Sugestor, Visualizador) nem mapas públicos/privados
+- Autenticação, papéis (Owner, Editor, Sugestor, Visualizador) nem mapas públicos/privados reais (o toggle do painel Figital é só estado local, não controla acesso)
 - Criar, listar, arquivar, excluir, transferir ou fazer fork de mapas
-- Persistência (banco, PostGIS, versionamento)
+- Persistência (banco, PostGIS, versionamento) — inclusive a API Figital da Fase 1.7, que é em memória
 - Estrelas, insígnias reais, seguir mapa
-- Importação/exportação (GeoJSON, KML, Shapefile) nem APIs externas
+- Importação/exportação geral (GeoJSON, KML, Shapefile) nem APIs externas — a exportação Figital (§16) é específica de totens/percursos
 - HUD de alertas, contadores do mapa, exploração de mapas públicos
 - Filtros e busca funcionais
+- Aplicativo do participante Figital (Fases 2–5, ver §16)
 
 Esses itens, quando previstos no plano original, estão em `docs/FUNCIONALIDADES_PENDENTES.md`.
 
 ---
 
-*Documento gerado em 09/09/2026 — descreve o estado do código neste repositório, não o produto planejado.*
+*Documento atualizado em 16/09/2026 — descreve o estado do código neste repositório, não o produto planejado.*

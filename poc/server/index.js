@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
+import figitalRouter from './figital.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -204,6 +205,12 @@ app.delete('/api/missoes/:id', (req, res) => {
     id: id
   });
 });
+
+// ==========================================================
+// ROTAS DA API FIGITAL (Fase 1.7 — persistência mínima)
+// Ver poc/server/figital.js e docs/CAMPANHA_FIGITAL.md §13.1
+// ==========================================================
+app.use('/api', figitalRouter);
 
 // Middleware de tratamento global de erros
 app.use((err, req, res, next) => {

@@ -81,13 +81,16 @@ As interações **Figital** (totens com QR, NPC, app do participante) não fazia
 
 ## Figital (plano novo — ver documento próprio)
 
-Não misturar com o MVP antigo do mapa. Figital no mapa: geometria + interações (missões e totens). Detalhe de fluxo, regras (RN-FIG), casos de uso e divisão mapa vs. app: [`docs/CAMPANHA_FIGITAL.md`](CAMPANHA_FIGITAL.md).
+Não misturar com o MVP antigo do mapa. Figital no mapa: geometria + interações (missões e totens). Detalhe de fluxo, regras (RN-FIG), casos de uso e divisão mapa vs. app: [`docs/CAMPANHA_FIGITAL.md`](CAMPANHA_FIGITAL.md). Roteiro de entrega por fases: [`docs/PLANO_IMPLEMENTACAO_FIGITAL.md`](PLANO_IMPLEMENTACAO_FIGITAL.md).
 
-Pendências resumidas até existir implementação:
+**Fase 1 (autoria no mapa) já implementada** — totem com papel/QR/NPC/insumos, ficha do percurso, catálogo de insumos, geração de QR, visibilidade do mapa e painel Figital, persistência mínima da API. Estado atual em [`docs/DOCUMENTACAO_ATUAL.md`](DOCUMENTACAO_ATUAL.md) §16.
 
-- Interações Figital sobre polígono/trilha: totens = marcadores com QR e papéis início / intermediário / fim
-- Jornada, modo sequencial ou livre, recompensa final e consentimento **por trilha/área** (percurso)
-- Missões de totem com NPC roteirizado e catálogo de insumos (foto, vídeo, áudio, texto, GPS, formulário, memória)
-- Aplicativo do participante (PWA no piloto): scan, consentimento no mapa, jornada, fila offline
-- Painel no mapa: jornadas por percurso, insumos, indicadores, exportação
-- Jornada só começa no QR de início daquele percurso; totem intermediário sem jornada não executa missão
+Pendências resumidas (Fases 2 a 5, aplicativo do participante):
+
+- Aplicativo do participante (PWA no piloto): scan de QR, consentimento, cena do NPC, execução de missão com envio de insumo, fila offline
+- Jornada de verdade (status INICIADA/EM_ANDAMENTO/CONCLUIDA/ABANDONADA), recompensa parcial e final liberadas por eventos reais do app
+- Jornada só começa no QR de início daquele percurso; totem intermediário sem jornada não executa missão (UC-08)
+- Sincronização offline e casos de borda de campo (sinal fraco, retomar jornada)
+- Insumos reais voltando ao painel do mapa (hoje o painel Figital só tem telas vazias funcionais) e piloto físico (Serra do Vulcão)
+- QR com HMAC real assinado pelo servidor (hoje a Fase 1 usa um mock local) e verificação online/offline
+- Persistência de banco de verdade tanto do mapa quanto da API Figital (hoje ambos são em memória do processo/navegador)

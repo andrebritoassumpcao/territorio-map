@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "territorio-client",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "poc/client", "run", "dev"],
+      "port": 5173
+    }
+  ]
+}
