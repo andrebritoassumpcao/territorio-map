@@ -451,7 +451,12 @@
                 <img src="./icons/map.svg" alt="" width="16" height="16" />
               </span>
             </button>
-            <button type="button" class="shape-action-btn" id="btn-shape-edit" aria-label="Editar">
+            <button type="button" class="shape-action-btn" id="btn-shape-style" aria-label="Estilo">
+              <span class="ds-icon ds-icon-16">
+                <img src="./icons/palette.svg" alt="" width="16" height="16" />
+              </span>
+            </button>
+            <button type="button" class="shape-action-btn" id="btn-shape-edit" aria-label="Editar nome">
               <span class="ds-icon ds-icon-16">
                 <img src="./icons/pencil.svg" alt="" width="16" height="16" />
               </span>
@@ -485,12 +490,12 @@
 
           <!-- Painel compacto de edição da forma -->
           <div class="shape-edit-panel hidden" id="shape-edit-panel" role="dialog" aria-labelledby="shape-edit-title">
-            <h3 class="shape-edit-title" id="shape-edit-title">Editar forma</h3>
-            <div class="form-group">
+            <h3 class="shape-edit-title" id="shape-edit-title">Editar nome</h3>
+            <div class="form-group" id="shape-name-group">
               <label class="form-label" for="input-shape-name">Nome</label>
               <input type="text" id="input-shape-name" class="form-input" maxlength="80" />
             </div>
-            <div class="form-group">
+            <div class="form-group" id="shape-stroke-group">
               <label class="form-label" for="input-shape-stroke">Cor da linha</label>
               <div class="color-swatches" id="edit-stroke-swatches">
                 <button type="button" class="color-swatch" data-color="#1f7a4c" style="background:#1f7a4c" aria-label="Verde"></button>
@@ -962,6 +967,24 @@
             </div>
           </div>
           <h2 class="memory-title" id="memory-title">Primeira colheita da horta</h2>
+          <div class="marker-actions memory-marker-actions" id="memory-marker-actions">
+            <button type="button" class="marker-action-btn" id="btn-memory-style" aria-label="Estilo" aria-expanded="false" aria-controls="memory-style-popover">
+              <span class="ds-icon ds-icon-18">
+                <img src="./icons/palette.svg" alt="" width="18" height="18" />
+              </span>
+            </button>
+            <button type="button" class="marker-action-btn" id="btn-memory-edit" aria-label="Editar">
+              <span class="ds-icon ds-icon-18">
+                <img src="./icons/pencil.svg" alt="" width="18" height="18" />
+              </span>
+            </button>
+            <button type="button" class="marker-action-btn marker-action-danger" id="btn-memory-delete" aria-label="Excluir">
+              <span class="ds-icon ds-icon-18">
+                <img src="./icons/trash-2.svg" alt="" width="18" height="18" />
+              </span>
+            </button>
+          </div>
+          <div class="marker-style-popover hidden" id="memory-style-popover" role="group" aria-label="Cor da memória"></div>
         </div>
         <div class="memory-gallery">
           <img class="memory-featured" id="memory-featured" src="" alt="Foto da memória" />
@@ -987,7 +1010,7 @@
       </div>
     </div>
 
-    <!-- Confirmação de exclusão de forma -->
+    <!-- Confirmação de exclusão -->
     <div class="confirm-backdrop hidden" id="confirm-delete" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-message">
       <div class="confirm-card">
         <p id="confirm-delete-message">Excluir esta área? Isso não pode ser desfeito.</p>
