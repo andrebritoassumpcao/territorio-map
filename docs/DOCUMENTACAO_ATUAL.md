@@ -2,7 +2,7 @@
 
 **Plataforma:** Território (territorio.ai)
 **Tipo:** Protótipo visual de alta fidelidade (POC)
-**Versão deste documento:** 1.2
+**Versão deste documento:** 1.3
 **Data:** 18/09/2026
 **Fonte de verdade do produto como está hoje:** este arquivo
 
@@ -29,6 +29,7 @@
 15. [Stack experimental (React + API)](#15-stack-experimental-react--api)
 16. [Figital — autoria no mapa (Fase 1)](#16-figital--autoria-no-mapa-fase-1)
 17. [Limitações conscientes](#17-limitações-conscientes)
+18. [Persistência do mapa (Supabase)](#18-persistência-do-mapa-supabase)
 
 ---
 
@@ -45,7 +46,7 @@ A documentação de regras de negócio original (`Documentacao_Regras_de_Negocio
 - Uma **única vista de mapa**. Ao carregar, o mapa dá `fitBounds` automaticamente sobre as áreas reais mockadas em Queimados e Nova Iguaçu (RJ) — não usa mais um centro fixo na região do Rio Sarapuí / Duque de Caxias.
 - Elementos de **missão**, **mutirão**, **memória**, **marcador**, **linha** e **polígono**.
 - **Carga inicial (fase atual):** o seed contém **apenas polígonos e trilhas de áreas reais** (contornos do OpenStreetMap). **Nenhum ponto** (missão, mutirão, memória ou marcador) é semeado ainda — esses arrays iniciam vazios; o usuário ainda pode criá-los na sessão.
-- Criação e edição acontecem **só na sessão do navegador** (recarregar a página perde o que foi criado).
+- Criação e edição são mantidas em memória do navegador, mas **agora podem ser persistidas** num banco Supabase (opcional, ligado por variáveis de ambiente) — ver [seção 18](#18-persistência-do-mapa-supabase). Sem as variáveis configuradas, o comportamento continua o antigo (recarregar perde o que foi criado).
 
 ---
 
@@ -94,7 +95,8 @@ Territorio-map/
 | Mapa | Leaflet 1.9.4 | Renderização, zoom, marcadores, linhas e polígonos |
 | Tiles | Esri World Imagery + OpenStreetMap | Satélite e mapa vetorial |
 | Dados | Arrays mockados em `app.js` | Na fase atual, só **áreas iniciais reais** (polígonos/trilhas de Queimados e Nova Iguaçu). Arrays de missões, mutirões, memórias e marcadores iniciam **vazios** |
-| Backend da tela principal | Nenhum | Sem login, sem persistência, sem API |
+| Backend da tela principal | Nenhum servidor próprio | Sem login e sem API própria; **persistência opcional via Supabase** chamado direto do cliente (ver §18) |
+| Persistência do mapa | Supabase (`@supabase/supabase-js`) | Snapshot único do mapa em JSONB; autosave com debounce; re-hidrata no boot. Só ativa se `VITE_SUPABASE_*` existir |
 | Figital (autoria) | `src/figital/model.js` + `qrcode` (npm) | Percurso, totem, missão de totem e insumo — estado em memória do navegador, ver §16 |
 | Figital (API) | `poc/server/figital.js` (Express, em memória) | Percursos/totens/manifest reais; jornadas/insumos/export como stubs — ver §16 |
 
@@ -462,7 +464,7 @@ O protótipo atual **não implementa**:
 
 - Autenticação, papéis (Owner, Editor, Sugestor, Visualizador) nem mapas públicos/privados reais (o toggle do painel Figital é só estado local, não controla acesso)
 - Criar, listar, arquivar, excluir, transferir ou fazer fork de mapas
-- Persistência (banco, PostGIS, versionamento) — inclusive a API Figital da Fase 1.7, que é em memória
+- Persistência avançada (PostGIS, versionamento, histórico, controle de conflito por editor) — o mapa agora salva um **snapshot único** no Supabase (§18), mas a API Figital da Fase 1.7 continua em memória
 - Estrelas, insígnias reais, seguir mapa
 - Importação/exportação geral (GeoJSON, KML, Shapefile) nem APIs externas — a exportação Figital (§16) é específica de totens/percursos
 - HUD de alertas, contadores do mapa, exploração de mapas públicos
@@ -470,6 +472,66 @@ O protótipo atual **não implementa**:
 - Aplicativo do participante Figital (Fases 2–5, ver §16)
 
 Esses itens, quando previstos no plano original, estão em `docs/FUNCIONALIDADES_PENDENTES.md`.
+
+---
+
+## 18. Persistência do mapa (Supabase)
+
+Para o evento de exposição, o mapa da UI principal (Leaflet) passou a **salvar o que é
+desenhado** num banco Postgres gratuito do Supabase, chamado **direto do cliente** — sem
+servidor novo e sem funções serverless. A app continua sendo um site estático (Vercel).
+
+### Como funciona
+
+- **Módulo:** `poc/client/src/db.js` cria o cliente Supabase e expõe `loadSnapshot()` /
+  `saveSnapshot()`. `dbEnabled` só é `true` se as variáveis de ambiente existirem.
+- **Modelo:** um **único mapa compartilhado** (registro `id = 'default'`). Todo o estado é
+  serializado num único JSON e gravado em **uma linha** da tabela `map_state` (coluna `data`
+  do tipo `jsonb`).
+- **O que é salvo (`serializeState` em `app.js`):** formas (`desenhos` — linhas/polígonos,
+  lendo a geometria atual do layer), pinos de conteúdo (missão, mutirão, memória, marcador —
+  com as memórias aninhadas no `data` do pai) e percursos/totens (`percursosById`), além de
+  `mapaVisibilidade`.
+- **Autosave:** `scheduleSave()` grava com *debounce* de ~800 ms após cada criação, edição,
+  exclusão, mudança de cor/estilo, memória, comentário, percurso e visibilidade. O autosave só
+  liga **depois** do boot/hidratação (`persistenceReady`), para não sobrescrever o banco durante
+  a carga.
+- **Boot / re-hidratação (`initPersistence` → `hydrateFromSnapshot`):** ao abrir, carrega o
+  snapshot; se existir, limpa o seed renderizado e reconstrói tudo com as mesmas funções de
+  render (`renderMissao/Mutirao/Memoria/Marcador`, `addShapeToMap`, `createTotemMarker`) e
+  reenquadra o mapa. Se **não** existir snapshot, semeia o banco com o estado inicial (áreas
+  reais). Sem `dbEnabled`, nada disso roda e a POC volta ao comportamento antigo (só memória).
+
+### Tabela (SQL)
+
+```sql
+create table if not exists map_state (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table map_state enable row level security;
+create policy "anon read"   on map_state for select using (true);
+create policy "anon insert" on map_state for insert with check (true);
+create policy "anon update" on map_state for update using (true) with check (true);
+```
+
+### Configuração
+
+- Variáveis (Vite, prefixo `VITE_`): `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
+  Local em `poc/client/.env.local` (ver `poc/client/.env.example`); em produção, nas
+  Environment Variables do projeto na Vercel (Production + Preview), seguido de redeploy.
+
+### Limitações conscientes desta persistência
+
+- A `anon key` fica **pública** no front-end (design do Supabase). Para uma demo é aceitável,
+  mas qualquer pessoa com o site pode ler/gravar esse mapa. Travar escrita exigiria
+  autenticação/policies mais estritas.
+- É **um snapshot único compartilhado**: editores simultâneos podem sobrescrever uns aos
+  outros (sem merge/versionamento). Adequado para operação por uma pessoa no evento.
+- Fotos de memória carregadas como *data URL* entram no JSON e aumentam o tamanho da linha —
+  ok para o volume de uma demo.
+- Não cobre a API Figital (`poc/server/figital.js`), que segue em memória.
 
 ---
 

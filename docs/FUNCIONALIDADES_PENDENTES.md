@@ -93,4 +93,4 @@ Pendências resumidas (Fases 2 a 5, aplicativo do participante):
 - Sincronização offline e casos de borda de campo (sinal fraco, retomar jornada)
 - Insumos reais voltando ao painel do mapa (hoje o painel Figital só tem telas vazias funcionais) e piloto físico (Serra do Vulcão)
 - QR com HMAC real assinado pelo servidor (hoje a Fase 1 usa um mock local) e verificação online/offline
-- Persistência de banco de verdade tanto do mapa quanto da API Figital (hoje ambos são em memória do processo/navegador)
+- Persistência de banco de verdade da **API Figital** (`poc/server/figital.js`) ainda é em memória do processo. O **mapa da UI principal (Leaflet)** já persiste no Supabase (snapshot único compartilhado) — ver `DOCUMENTACAO_ATUAL.md` §18

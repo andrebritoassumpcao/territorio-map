@@ -18,6 +18,7 @@ import {
   gerarUrlQrMissao,
   gerarAssinaturaMock
 } from './figital/model.js';
+import { dbEnabled, loadSnapshot, saveSnapshot } from './db.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. INICIALIZAÇÃO DO MAPA (LEAFLET + SATÉLITE ESRI)
@@ -93,6 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let pendingDelete = null;
   let editingItemId = null;
 
+  // Persistência (Supabase) — ver src/db.js e a seção 10 (persistência) mais abaixo.
+  // `persistenceReady` só liga o autosave depois do boot/hidratação, para que o
+  // render do seed e a re-hidratação não gravem por cima do banco.
+  let persistenceReady = false;
+  let hydrating = false;
+  let saveTimer = null;
+
   function newFeatureId(prefix) {
     featureSeq += 1;
     return `${prefix}${featureSeq}`;
@@ -104,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (kind === 'missao' || kind === 'marcador') {
       parentById.set(data.id, entry);
     }
+    scheduleSave();
     return entry;
   }
 
@@ -328,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (record.casing) record.casing.on('mousedown', onMouseDown);
   }
 
-  function addShapeToMap({ tipo, titulo, latlngs, color, fillColor }) {
+  function addShapeToMap({ tipo, titulo, latlngs, color, fillColor, id }) {
     const isLine = tipo === 'linha';
     const stroke = color || '#1f7a4c';
     const fill = fillColor || stroke;
@@ -342,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
     layer.bindTooltip(titulo, { permanent: false });
 
     const record = {
-      id: `d${desenhos.length + 1}`,
+      id: id || `d${desenhos.length + 1}`,
       tipo,
       titulo,
       latlngs,
@@ -353,6 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     desenhos.push(record);
     bindShapeClicks(record);
+    scheduleSave();
     return record;
   }
 
@@ -837,6 +847,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       renderMemoryComments(currentMemory.comentarios);
       memoryCommentInput.value = '';
+      scheduleSave();
     });
   }
   if (memoryCommentInput) {
@@ -874,8 +885,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Renderizar Missões
-  missoesData.forEach(item => {
+  // Funções de render reutilizáveis: usadas tanto no seed inicial quanto na
+  // re-hidratação a partir do snapshot salvo (ver seção 10 — persistência).
+  function renderMissao(item) {
     const icon = createCustomIcon(
       typeBadge('missao', item.cor),
       item.titulo
@@ -883,11 +895,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const marker = L.marker([item.lat, item.lng], { icon })
       .bindPopup(buildParentCardHtml('missao', item), POPUP_OPTS)
       .addTo(layerGroups.missoes);
-    registerMapItem('missao', item, marker);
-  });
+    return registerMapItem('missao', item, marker);
+  }
 
-  // Renderizar Mutirões
-  mutiroesData.forEach(item => {
+  function renderMutirao(item) {
     const icon = createCustomIcon(
       typeBadge('mutirao', item.cor),
       item.titulo
@@ -895,11 +906,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const marker = L.marker([item.lat, item.lng], { icon })
       .bindPopup(mutiraoPopupHtml(item), POPUP_OPTS)
       .addTo(layerGroups.mutiroes);
-    registerMapItem('mutirao', item, marker);
-  });
+    return registerMapItem('mutirao', item, marker);
+  }
 
-  // Renderizar Memórias
-  memoriasData.forEach(item => {
+  function renderMemoria(item) {
     const icon = L.divIcon({
       className: 'custom-marker-wrapper',
       html: `
@@ -918,11 +928,10 @@ document.addEventListener('DOMContentLoaded', () => {
         openMemoryModal(item);
       })
       .addTo(layerGroups.memorias);
-    registerMapItem('memoria', item, marker);
-  });
+    return registerMapItem('memoria', item, marker);
+  }
 
-  // Renderizar Marcadores
-  marcadoresData.forEach(item => {
+  function renderMarcador(item) {
     const icon = createCustomIcon(
       typeBadge(item.badgeClass || 'marcador', item.cor),
       item.titulo
@@ -930,8 +939,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const marker = L.marker([item.lat, item.lng], { icon })
       .bindPopup(buildParentCardHtml('marcador', item), POPUP_OPTS)
       .addTo(layerGroups.marcadores);
-    registerMapItem('marcador', item, marker);
-  });
+    return registerMapItem('marcador', item, marker);
+  }
+
+  // Render do seed inicial (arrays acima)
+  missoesData.forEach(renderMissao);
+  mutiroesData.forEach(renderMutirao);
+  memoriasData.forEach(renderMemoria);
+  marcadoresData.forEach(renderMarcador);
 
   map.on('popupopen', (e) => {
     const root = e.popup?.getElement();
@@ -1833,6 +1848,7 @@ document.addEventListener('DOMContentLoaded', () => {
       percursoDaForma.titulo = name;
       if (typeof refreshFigitalPanel === 'function') refreshFigitalPanel();
     }
+    scheduleSave();
     showToast('Alterações salvas.');
   }
 
@@ -1878,6 +1894,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearSelection();
     pendingDelete = null;
     if (confirmDeleteEl) confirmDeleteEl.classList.add('hidden');
+    scheduleSave();
     showToast(record.tipo === 'linha' ? 'Linha excluída.' : 'Área excluída.');
   }
 
@@ -2552,6 +2569,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ok) return; // validação falhou; mantém modal aberto
       }
 
+      // Persistir edições/memórias (as criações já disparam via registerMapItem)
+      scheduleSave();
+
       // Resetar formulário e fechar modal
       closeModal();
       setMapTool('select');
@@ -3077,6 +3097,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (mi >= 0) mapItems.splice(mi, 1);
       if (kind === 'missao' || kind === 'marcador') parentById.delete(id);
     }
+    scheduleSave();
     showToast(toastDeleted(kind));
   }
 
@@ -3109,6 +3130,7 @@ document.addEventListener('DOMContentLoaded', () => {
           btn.classList.toggle('active', (btn.dataset.color || '').toLowerCase() === hex.toLowerCase());
         });
       }
+      scheduleSave();
       return;
     }
     const entry = findMapItem(kind, id);
@@ -3123,6 +3145,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const picker = pop.querySelector('input[type="color"]');
       if (picker) picker.value = hex;
     }
+    scheduleSave();
   };
 
   window.confirmDeleteMapItem = function(kind, id) {
@@ -3360,6 +3383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     refreshFigitalPanel();
+    scheduleSave();
     showToast(isEditing ? `Totem "${nome}" atualizado.` : `Totem "${nome}" criado no ponto escolhido.`);
     editingTotemId = null;
     totemFalasBuilder.set([]);
@@ -3572,6 +3596,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPercursoStatus(percurso, shapeRecord);
     renderPercursoVisibilidadeAviso(percurso);
     refreshFigitalPanel();
+    scheduleSave();
     showToast('Percurso salvo.');
   }
 
@@ -3641,6 +3666,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         showToast(`Mapa marcado como ${mapaVisibilidade === 'publico' ? 'público' : 'privado'}.`);
         refreshFigitalPanel();
+        scheduleSave();
         if (selection.record) renderPercursoVisibilidadeAviso(getPercursoForShape(selection.record) || { ativo: false });
       });
     });
@@ -3718,6 +3744,139 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   refreshFigitalPanel();
+
+  // ==========================================================================
+  // 10. PERSISTÊNCIA DO MAPA (Supabase) — snapshot único compartilhado
+  // Serializa todo o estado do mapa num JSON e grava/lê em src/db.js.
+  // Autosave com debounce; re-hidratação no boot. Ver docs/DOCUMENTACAO_ATUAL.md.
+  // ==========================================================================
+
+  // Converte latlngs do Leaflet (polyline: [LatLng]; polygon: [[LatLng]]) para
+  // um anel simples [[lat, lng], ...] — mesmo formato aceito por addShapeToMap.
+  function latlngsToPlain(latlngs) {
+    if (!latlngs || !latlngs.length) return [];
+    const ring = Array.isArray(latlngs[0]) ? latlngs[0] : latlngs;
+    return ring.map(ll => [ll.lat, ll.lng]);
+  }
+
+  // Garante que novos ids gerados depois da hidratação não colidam com os salvos.
+  function bumpSeqFromIds(ids) {
+    let max = featureSeq;
+    ids.forEach(id => {
+      const n = parseInt(String(id).replace(/^\D+/, ''), 10);
+      if (Number.isFinite(n) && n > max) max = n;
+    });
+    featureSeq = max;
+  }
+
+  function serializeState() {
+    return {
+      version: 1,
+      mapaVisibilidade,
+      desenhos: desenhos.map(r => ({
+        id: r.id,
+        tipo: r.tipo,
+        titulo: r.titulo,
+        latlngs: latlngsToPlain(r.layer.getLatLngs()),
+        color: r.color,
+        fillColor: r.fillColor
+      })),
+      // Pinos de conteúdo (memórias aninhadas viajam dentro do data do pai).
+      // Totens saem via `percursos`, para não duplicar.
+      pins: mapItems
+        .filter(e => ['missao', 'mutirao', 'memoria', 'marcador'].includes(e.kind))
+        .map(e => ({ kind: e.kind, data: e.data })),
+      percursos: Array.from(percursosById.values())
+    };
+  }
+
+  function scheduleSave() {
+    if (!persistenceReady || hydrating || !dbEnabled) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => saveSnapshot(serializeState()), 800);
+  }
+
+  function clearAllMapState() {
+    Object.values(layerGroups).forEach(group => group.clearLayers?.());
+    desenhos.length = 0;
+    mapItems.length = 0;
+    parentById.clear();
+    percursosById.clear();
+    percursoIdByShapeId.clear();
+    totemEntries.clear();
+  }
+
+  function hydrateFromSnapshot(snap) {
+    hydrating = true;
+    clearAllMapState();
+
+    (snap.desenhos || []).forEach(d => {
+      addShapeToMap({
+        id: d.id,
+        tipo: d.tipo,
+        titulo: d.titulo,
+        latlngs: d.latlngs,
+        color: d.color,
+        fillColor: d.fillColor
+      });
+    });
+
+    (snap.pins || []).forEach(({ kind, data }) => {
+      if (kind === 'missao') renderMissao(data);
+      else if (kind === 'mutirao') renderMutirao(data);
+      else if (kind === 'memoria') renderMemoria(data);
+      else if (kind === 'marcador') renderMarcador(data);
+    });
+
+    (snap.percursos || []).forEach(percurso => {
+      percursosById.set(percurso.id, percurso);
+      if (percurso.geometriaId) percursoIdByShapeId.set(percurso.geometriaId, percurso.id);
+      (percurso.totens || []).forEach(totem => {
+        const marker = createTotemMarker(totem);
+        totemEntries.set(totem.id, { data: totem, marker });
+        registerMapItem('totem', totem, marker);
+      });
+    });
+
+    // Reajusta o contador de ids para não colidir com o que veio do banco.
+    const ids = [
+      ...mapItems.map(e => e.data.id),
+      ...Array.from(percursosById.values()).flatMap(p => (p.totens || []).map(t => t.id))
+    ];
+    bumpSeqFromIds(ids);
+
+    if (typeof snap.mapaVisibilidade === 'string') mapaVisibilidade = snap.mapaVisibilidade;
+
+    refreshFigitalPanel();
+    if (typeof applyFilters === 'function') applyFilters();
+
+    // Reenquadra o mapa sobre as formas carregadas (se houver).
+    if (desenhos.length) {
+      const group = L.featureGroup(desenhos.map(r => r.layer));
+      const refit = () => {
+        map.invalidateSize();
+        map.fitBounds(group.getBounds(), { padding: [40, 40] });
+      };
+      refit();
+      setTimeout(refit, 300);
+    }
+
+    hydrating = false;
+  }
+
+  async function initPersistence() {
+    if (!dbEnabled) return; // sem banco: segue só em memória (comportamento antigo)
+    const snap = await loadSnapshot();
+    if (snap && typeof snap === 'object') {
+      hydrateFromSnapshot(snap);
+    } else {
+      // Primeira vez: semeia o banco com o estado inicial (áreas reais).
+      await saveSnapshot(serializeState());
+    }
+    persistenceReady = true; // liga o autosave só depois de hidratar/semear
+  }
+
+  initPersistence();
 
   // 8. TOAST NOTIFICATION UTILITY
   window.showToast = function(message) {
