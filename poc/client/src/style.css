@@ -1048,7 +1048,7 @@ input[type="color"]::-webkit-color-swatch {
   position: absolute;
   z-index: 1100;
   display: flex;
-  gap: 4px;
+  gap: 8px;
   padding: 4px;
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
@@ -1083,11 +1083,11 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 .shape-action-btn {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1606,6 +1606,71 @@ input[type="color"]::-webkit-color-swatch {
   flex-direction: column;
   gap: 8px;
   margin-top: 4px;
+}
+
+.marker-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border-subtle, #e2e8f0);
+  position: relative;
+}
+
+.context-card .marker-actions {
+  padding: 8px 16px 16px;
+  margin-top: 0;
+}
+
+.context-card-simple .marker-actions {
+  padding: 8px 0 0;
+  margin-top: 4px;
+}
+
+.marker-action-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.marker-action-btn:hover {
+  background: var(--color-bg-canvas, #f1f5f9);
+}
+
+.marker-action-danger {
+  margin-left: auto;
+}
+
+.marker-action-danger:hover {
+  background: #fdecea;
+}
+
+.marker-style-popover {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0 0;
+}
+
+.marker-style-popover.hidden {
+  display: none;
+}
+
+.context-card .marker-style-popover {
+  padding: 0 16px 12px;
+}
+
+.context-card-simple .marker-style-popover {
+  padding: 8px 0 0;
 }
 
 .card-instrucao,
@@ -2162,6 +2227,16 @@ input[type="color"]::-webkit-color-swatch {
   font-weight: 600;
   line-height: 28px;
   color: var(--color-text-primary);
+}
+
+.memory-marker-actions {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border-subtle, #e2e8f0);
+}
+
+.memory-modal-header .marker-style-popover {
+  padding: 8px 0 0;
 }
 
 .memory-gallery {
@@ -3324,6 +3399,7 @@ textarea:focus-visible,
 .btn-close-panel:focus-visible,
 .btn-sidebar-toggle:focus-visible,
 .shape-action-btn:focus-visible,
+.marker-action-btn:focus-visible,
 .user-profile:focus-visible,
 .profile-menu-link:focus-visible,
 .color-swatch:focus-visible,

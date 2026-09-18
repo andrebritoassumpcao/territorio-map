@@ -2,8 +2,8 @@
 
 **Plataforma:** Território (territorio.ai)
 **Tipo:** Protótipo visual de alta fidelidade (POC)
-**Versão deste documento:** 1.1
-**Data:** 16/09/2026
+**Versão deste documento:** 1.2
+**Data:** 18/09/2026
 **Fonte de verdade do produto como está hoje:** este arquivo
 
 > Sempre que uma funcionalidade for adicionada, alterada ou removida, este documento deve ser atualizado na mesma entrega. Ver `.cursor/rules/atualizar-documentacao-atual.mdc`.
@@ -42,8 +42,9 @@ A documentação de regras de negócio original (`Documentacao_Regras_de_Negocio
 
 ### Conceito em uso na POC
 
-- Uma **única vista de mapa**, centrada na região do Rio Sarapuí / Duque de Caxias (RJ).
+- Uma **única vista de mapa**. Ao carregar, o mapa dá `fitBounds` automaticamente sobre as áreas reais mockadas em Queimados e Nova Iguaçu (RJ) — não usa mais um centro fixo na região do Rio Sarapuí / Duque de Caxias.
 - Elementos de **missão**, **mutirão**, **memória**, **marcador**, **linha** e **polígono**.
+- **Carga inicial (fase atual):** o seed contém **apenas polígonos e trilhas de áreas reais** (contornos do OpenStreetMap). **Nenhum ponto** (missão, mutirão, memória ou marcador) é semeado ainda — esses arrays iniciam vazios; o usuário ainda pode criá-los na sessão.
 - Criação e edição acontecem **só na sessão do navegador** (recarregar a página perde o que foi criado).
 
 ---
@@ -92,7 +93,7 @@ Territorio-map/
 | UI principal | HTML + CSS + JavaScript | Protótipo visual do mapa |
 | Mapa | Leaflet 1.9.4 | Renderização, zoom, marcadores, linhas e polígonos |
 | Tiles | Esri World Imagery + OpenStreetMap | Satélite e mapa vetorial |
-| Dados | Arrays mockados em `app.js` | Missões, mutirões, memórias, marcadores e áreas iniciais |
+| Dados | Arrays mockados em `app.js` | Na fase atual, só **áreas iniciais reais** (polígonos/trilhas de Queimados e Nova Iguaçu). Arrays de missões, mutirões, memórias e marcadores iniciam **vazios** |
 | Backend da tela principal | Nenhum | Sem login, sem persistência, sem API |
 | Figital (autoria) | `src/figital/model.js` + `qrcode` (npm) | Percurso, totem, missão de totem e insumo — estado em memória do navegador, ver §16 |
 | Figital (API) | `poc/server/figital.js` (Express, em memória) | Percursos/totens/manifest reais; jornadas/insumos/export como stubs — ver §16 |
@@ -199,15 +200,25 @@ Há um painel de **legenda** no HTML, mas **nenhum botão da toolbar o abre**.
 Ao clicar numa linha ou polígono no modo selecionar:
 
 - Bounding box pontilhado.
-- Ações no canto da caixa: **adicionar elemento dentro**, **editar**, **excluir**.
+- Ações no canto da caixa: **adicionar elemento dentro**, **estilo** (cor), **editar nome**, **excluir**.
 
 **Adicionar à forma:** posiciona missão ou marcador **somente dentro** da área/trilha destacada.
 
-**Editar:** nome (até 80 caracteres), cor da linha e, em polígono, cor de preenchimento.
+**Estilo:** só a cor da linha e, em polígono, a cor de preenchimento (as mesmas swatches do desenho).
 
-**Excluir:** confirmação. A exclusão é imediata na memória da sessão (não é soft delete).
+**Editar:** só o nome (até 80 caracteres).
 
-Dados mockados iniciais: “Área de Preservação Rio Sarapuí” e “Zoneamento de Risco de Enchente”.
+**Excluir:** confirmação. A exclusão é imediata na memória da sessão (não é soft delete). A mesma caixa de confirmação vale para excluir pinos (missão, mutirão, marcador, totem, memória).
+
+Dados mockados iniciais: **áreas reais** de Queimados e Nova Iguaçu, com contornos do OpenStreetMap (simplificados), seedadas via `addShapeToMap` em `app.js`:
+
+- **Horto Municipal de Queimados** (polígono)
+- **Área verde ao lado do Horto** (polígono, mata entre o Horto e o Morro da Baleia)
+- **Morro da Baleia** (polígono)
+- **Serra do Vulcão — Parque Municipal de Nova Iguaçu** (polígono)
+- **Trilha da Serra do Vulcão** (linha)
+
+Ao final da seed, o mapa agrupa essas camadas num `L.featureGroup` e chama `map.fitBounds(...)` (com `invalidateSize` + refit adiado) para enquadrar todas as áreas.
 
 ---
 
@@ -225,13 +236,23 @@ O modal também pode ser usado com abas (missão / mutirão / marcador). A aba M
 
 O modal tem largura de ~560px e **altura limitada** (`min(90vh, 780px)`): cabeçalho e rodapé ficam fixos e o corpo do formulário rola por dentro, então formulários longos (ex.: missão com "O que coletar" + NPC) não estouram a tela. As opções liga/desliga (NPC no totem e na missão, "Tem prazo?" na missão) usam um **interruptor (switch)** em vez de checkbox.
 
+### Ações no popup do pino
+
+Todo pino (missão, mutirão, marcador, totem) tem no rodapé do card três botões só-ícone, com rótulo acessível:
+
+- **Estilo** — abre as swatches de cor já usadas no desenho (`#1f7a4c`, `#d4832a`, `#b3241b`, `#00bcd4`, `#7c4dff` + seletor livre). A cor fica em `data.cor` e pinta o badge do pino.
+- **Editar** — reabre o mesmo modal de criação, já preenchido.
+- **Excluir** — pede confirmação (“Excluir esta missão? Isso não pode ser desfeito.”) e remove o pino da sessão.
+
+Os CTAs de conteúdo (Participar, Gerar QR, Ver detalhes, Adicionar memória) continuam no corpo do card.
+
 ---
 
 ## 9. Missões
 
 ### Dados mockados na carga
 
-Quatro missões de exemplo (nascente Sarapuí, horta comunitária, reflorestamento, monitoramento da água), com título, status, número de voluntários, **instrução ("o que deve ser feito")**, **catálogo "o que coletar"** (insumos estruturados: foto/vídeo/áudio/texto/GPS/formulário/memória), **recompensa**, **NPC opcional** (`npc`) e **prazo opcional** (`temPrazo` + `prazo`). Cada missão também carrega um campo `qr` (nulo até ser gerado). A autoria de missão que antes ficava no totem (o que pedir / o que coletar / recompensa) foi movida para cá.
+**Na fase atual não há missões semeadas** — o array `missoesData` inicia vazio (o mapa começa só com polígonos/trilhas reais). O formato de cada missão mockada, quando existia, era: título, status, número de voluntários, **instrução ("o que deve ser feito")**, **catálogo "o que coletar"** (insumos estruturados: foto/vídeo/áudio/texto/GPS/formulário/memória), **recompensa**, **NPC opcional** (`npc`) e **prazo opcional** (`temPrazo` + `prazo`), além de um campo `qr` (nulo até ser gerado). Esse continua sendo o formato das missões criadas na sessão. A autoria de missão que antes ficava no totem (o que pedir / o que coletar / recompensa) foi movida para cá.
 
 Status usados na POC visual: **Em andamento**, **Planejado**, **Ativa** (não seguem ainda o ciclo Aberta → Em andamento → Concluída → Cancelada da regra de negócio).
 
@@ -261,6 +282,7 @@ O ponto no mapa é o clique (ou o ponto interno da forma, se vier do “adiciona
 - **Criar mutirão para esta missão** — abre o modal de vincular mutirão existente
 - **Gerar arte de QR** — gera PNG via `qrcode` (npm) com a URL `https://{dominio}/m/{mapaId}/missao/{missaoId}?s={assinatura}`, mesmo padrão e assinatura mock local (`gerarAssinaturaMock`) do QR de totem (§16). Só geração de arte (link + PNG baixável); ainda não há tela de leitura/execução do QR — o consumo continua stub de servidor.
 - **Adicionar memória** — abre o fluxo de memória já ligada a essa missão
+- **Estilo / Editar / Excluir** — barra de ícones no rodapé do card (ver §8)
 
 Não há persistência, dono, permissão, alteração real de status nem lista de missões fora do mapa.
 
@@ -270,7 +292,7 @@ Não há persistência, dono, permissão, alteração real de status nem lista d
 
 ### Dados mockados
 
-Três mutirões de exemplo, cada um com missão-pai, data/hora e vagas (ex.: `14/30 vagas`).
+**Na fase atual não há mutirões semeados** — o array inicia vazio (o mapa começa só com polígonos/trilhas). A estrutura de cada mutirão mockado, quando existia, era: missão-pai, data/hora e vagas (ex.: `14/30 vagas`). Continua sendo o formato usado pelos mutirões criados na sessão.
 
 ### Criação na POC
 
@@ -286,6 +308,7 @@ Não se cria um mutirão novo. O fluxo **vincula um mutirão já listado** a um 
 - Missão-pai
 - Data e vagas
 - **Participar do mutirão** — só dispara toast (“Inscrição confirmada”)
+- **Estilo / Editar / Excluir** — mesma barra de ícones dos outros pinos (§8)
 
 Não há capacidade real, calendário, confirmação de presença, proposta pendente nem aprovação.
 
@@ -295,7 +318,7 @@ Não há capacidade real, calendário, confirmação de presença, proposta pend
 
 ### Dados mockados
 
-Três memórias com foto, autor, data, descrição, galeria extra e comentários de exemplo.
+**Na fase atual não há memórias semeadas** — os arrays iniciam vazios. O formato de cada memória mockada, quando existia, era: foto, autor, data, descrição, galeria extra e comentários de exemplo. Continua sendo o formato das memórias criadas na sessão.
 
 ### Criação
 
@@ -313,8 +336,9 @@ Só a partir de missão ou marcador. Campos:
 - Descrição
 - Lista de comentários
 - Campo para enviar comentário (gravado só na sessão; autor fixo “Amanda”)
+- **Estilo, Editar e Excluir** no cabeçalho: o lápis reabre o formulário de memória; a lixeira usa a mesma confirmação dos outros itens; o estilo grava `cor` na memória (no pino fotográfico, aparece como anel colorido)
 
-Tipos **vídeo**, **texto puro** e **documento** não existem. Não há vínculo com mutirão. Não há edição da memória depois de criada.
+Tipos **vídeo**, **texto puro** e **documento** não existem. Não há vínculo com mutirão.
 
 ---
 
@@ -322,7 +346,7 @@ Tipos **vídeo**, **texto puro** e **documento** não existem. Não há vínculo
 
 ### Dados mockados
 
-Dois pontos: “Ponto de Descarte Irregular” e “Pluviômetro Comunitário 01”.
+**Na fase atual não há marcadores semeados** — o array inicia vazio. Antes havia dois pontos de exemplo (“Ponto de Descarte Irregular” e “Pluviômetro Comunitário 01”); o formato segue disponível para marcadores criados na sessão.
 
 ### Criação
 
@@ -333,7 +357,7 @@ Dois pontos: “Ponto de Descarte Irregular” e “Pluviômetro Comunitário 01
 
 Pode ficar vinculado a uma linha/área se nascer pelo “adicionar à forma”.
 
-Popup: tipo, descrição, categoria e botão **Adicionar memória**.
+Popup: tipo, descrição, categoria, botão **Adicionar memória** e a barra **Estilo / Editar / Excluir** (§8). O pino pode ter cor própria (`data.cor`).
 
 ---
 
@@ -398,7 +422,7 @@ Entregue conforme `docs/PLANO_IMPLEMENTACAO_FIGITAL.md` / `docs/fases de impleme
 
 ### Totem na ficha da forma
 
-O **"+"** de uma trilha/área selecionada (`shape-actions`) oferece **Missão**, **Totem** e **Marcador**. Totem só entra dentro da geometria selecionada (nunca pelo "Novo Marcador" solto, RN-FIG-041). O editor de totem é um **formulário único** (sem assistente de etapas): nome, **tipo do ponto** (Início, Ponto específico ou Fim), **descrição/curiosidades** e um **NPC opcional** (interruptor "Tem personagem que fala?"; ligado abre nome + falas). O totem serve só para marcar e descrever o ponto — quem conduz a ação (o que pedir/coletar/recompensa) é o marcador de missão. O mesmo fluxo reabre em modo edição pelo botão "Editar totem" no popup do totem ou pela ficha do percurso.
+O **"+"** de uma trilha/área selecionada (`shape-actions`) oferece **Missão**, **Totem** e **Marcador**. Totem só entra dentro da geometria selecionada (nunca pelo "Novo Marcador" solto, RN-FIG-041). O editor de totem é um **formulário único** (sem assistente de etapas): nome, **tipo do ponto** (Início, Ponto específico ou Fim), **descrição/curiosidades** e um **NPC opcional** (interruptor "Tem personagem que fala?"; ligado abre nome + falas). O totem serve só para marcar e descrever o ponto — quem conduz a ação (o que pedir/coletar/recompensa) é o marcador de missão. O mesmo fluxo reabre em modo edição pelo **lápis** no popup do totem (a barra Estilo / Editar / Excluir substituiu o botão “Editar totem”) ou pela ficha do percurso.
 
 Validação client-side antes de liberar o percurso: só um totem `inicio` por percurso (RN-FIG-009, bloqueia no submit com toast); totem sempre nasce dentro da geometria (RN-FIG-011, herdado do fluxo "adicionar dentro"); pelo menos um totem além do início (RN-FIG-010, mostrado como pendência na ficha do percurso e no painel, não bloqueia o salvamento).
 
@@ -408,7 +432,7 @@ Lista dinâmica do que coletar (foto, vídeo, áudio, texto, GPS/check-in, formu
 
 ### Ficha do percurso
 
-Quando a forma selecionada já tem totens, o botão "Ficha do percurso" (ícone de mapa, ao lado de editar/excluir) abre um painel com: modo de progresso, recompensa final, texto de consentimento, período opcional, ativo/inativo, permitir replay, status de prontidão (mesma validação acima) e a lista de totens do percurso com atalhos para editar ou gerar QR.
+Quando a forma selecionada já tem totens, o botão "Ficha do percurso" (ícone de mapa, ao lado de estilo/editar/excluir) abre um painel com: modo de progresso, recompensa final, texto de consentimento, período opcional, ativo/inativo, permitir replay, status de prontidão (mesma validação acima) e a lista de totens do percurso com atalhos para editar ou gerar QR.
 
 ### QR
 
@@ -449,4 +473,4 @@ Esses itens, quando previstos no plano original, estão em `docs/FUNCIONALIDADES
 
 ---
 
-*Documento atualizado em 16/09/2026 — descreve o estado do código neste repositório, não o produto planejado.*
+*Documento atualizado em 18/09/2026 — descreve o estado do código neste repositório, não o produto planejado.*
