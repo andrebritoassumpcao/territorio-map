@@ -16,7 +16,9 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const dbEnabled = Boolean(url && key);
 
-const supabase = dbEnabled ? createClient(url, key) : null;
+// Exportado para o módulo de autenticação (auth.js) usar a mesma instância/sessão:
+// com o usuário logado, as gravações abaixo saem com o JWT e passam no RLS.
+export const supabase = dbEnabled ? createClient(url, key) : null;
 
 // Identificador do mapa único compartilhado (fase de exposição).
 const MAP_ID = 'default';

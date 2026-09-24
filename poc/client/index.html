@@ -23,6 +23,58 @@
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
+    <!-- =========================================================================
+       0. MODAL DE LOGIN (Supabase Auth — usuário único de demonstração)
+       O mapa é visível sem login; o modal abre pelo botão "Entrar" do topo ou
+       ao tentar editar algo (elementos com data-requires-auth). Ver app.js.
+       ========================================================================= -->
+    <div class="login-screen hidden" id="login-screen" role="dialog" aria-modal="true" aria-labelledby="login-title">
+      <div class="modal-card login-card">
+        <button type="button" class="btn-close-panel login-close" id="btn-login-close" aria-label="Fechar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+        <form id="login-form" class="login-form" novalidate>
+          <div class="login-brand">
+            <img src="./logo.png" class="login-logo" alt="Território" />
+          </div>
+          <div class="login-heading">
+            <h1 class="modal-title" id="login-title">Entrar no Território</h1>
+            <p class="form-helper-text" id="login-subtitle">Entre para criar e editar no mapa colaborativo.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-email">E-mail</label>
+            <input
+              class="form-input"
+              id="login-email"
+              name="email"
+              type="email"
+              autocomplete="username"
+              placeholder="voce@exemplo.org"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Senha</label>
+            <input
+              class="form-input"
+              id="login-password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+          <p class="form-error login-error" id="login-error" role="alert" hidden></p>
+          <button type="submit" class="card-btn card-btn-primary login-submit" id="login-submit">
+            Entrar
+          </button>
+        </form>
+      </div>
+    </div>
+
     <div id="app-container">
       <!-- =========================================================================
          1. SIDEBAR LATERAL ESQUERDA
@@ -167,9 +219,13 @@
             </button>
 
             <div class="profile-cluster">
+              <!-- Deslogado: botão Entrar. Logado: perfil (app.js alterna os dois). -->
+              <button type="button" class="card-btn card-btn-primary btn-login-header" id="btn-login">
+                Entrar
+              </button>
               <button
                 type="button"
-                class="user-profile"
+                class="user-profile hidden"
                 id="btn-profile"
                 title="Perfil"
                 aria-expanded="false"
@@ -290,6 +346,17 @@
                     </li>
                   </ul>
                 </div>
+
+                <button type="button" class="profile-menu-link profile-menu-logout" id="btn-logout" role="menuitem">
+                  <span class="profile-icon-tile">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                  </span>
+                  <span>Sair</span>
+                </button>
               </div>
             </div>
           </div>
@@ -350,14 +417,14 @@
 
             <span class="tool-divider" aria-hidden="true"></span>
 
-            <button class="tool-btn btn-primary-action" id="btn-nova-missao">
+            <button class="tool-btn btn-primary-action" id="btn-nova-missao" data-requires-auth>
               <span class="ds-icon ds-icon-16">
                 <img src="./icons/plus.svg" alt="" width="16" height="16" />
               </span>
               <span>Novo Marcador</span>
             </button>
 
-            <button class="tool-btn" id="tool-desenhar">
+            <button class="tool-btn" id="tool-desenhar" data-requires-auth>
               <span class="ds-icon ds-icon-16">
                 <img src="./icons/star.svg" alt="" width="16" height="16" />
               </span>
@@ -441,27 +508,27 @@
 
           <!-- Ações da forma selecionada (canto superior direito do quadrado) -->
           <div class="shape-actions hidden" id="shape-actions">
-            <button type="button" class="shape-action-btn" id="btn-shape-add" aria-label="Adicionar à área" aria-expanded="false" aria-haspopup="menu" aria-controls="shape-add-flyout">
+            <button type="button" class="shape-action-btn" id="btn-shape-add" data-requires-auth aria-label="Adicionar à área" aria-expanded="false" aria-haspopup="menu" aria-controls="shape-add-flyout">
               <span class="ds-icon ds-icon-16">
                 <img src="./icons/plus.svg" alt="" width="16" height="16" />
               </span>
             </button>
-            <button type="button" class="shape-action-btn hidden" id="btn-shape-percurso" aria-label="Ficha do percurso" aria-haspopup="dialog" aria-controls="percurso-edit-panel" title="Ficha do percurso">
+            <button type="button" class="shape-action-btn hidden" id="btn-shape-percurso" data-requires-auth aria-label="Ficha do percurso" aria-haspopup="dialog" aria-controls="percurso-edit-panel" title="Ficha do percurso">
               <span class="ds-icon ds-icon-16">
                 <img src="./icons/map.svg" alt="" width="16" height="16" />
               </span>
             </button>
-            <button type="button" class="shape-action-btn" id="btn-shape-style" aria-label="Estilo">
+            <button type="button" class="shape-action-btn" id="btn-shape-style" data-requires-auth aria-label="Estilo">
               <span class="ds-icon ds-icon-16">
                 <img src="./icons/palette.svg" alt="" width="16" height="16" />
               </span>
             </button>
-            <button type="button" class="shape-action-btn" id="btn-shape-edit" aria-label="Editar nome">
+            <button type="button" class="shape-action-btn" id="btn-shape-edit" data-requires-auth aria-label="Editar nome">
               <span class="ds-icon ds-icon-16">
                 <img src="./icons/pencil.svg" alt="" width="16" height="16" />
               </span>
             </button>
-            <button type="button" class="shape-action-btn shape-action-danger" id="btn-shape-delete" aria-label="Excluir">
+            <button type="button" class="shape-action-btn shape-action-danger" id="btn-shape-delete" data-requires-auth aria-label="Excluir">
               <span class="ds-icon ds-icon-16">
                 <img src="./icons/trash-2.svg" alt="" width="16" height="16" />
               </span>
@@ -890,8 +957,8 @@
             <div class="figital-panel-section">
               <p class="section-label">Visibilidade do mapa</p>
               <div class="map-base-selector" id="mapa-visibilidade-selector">
-                <button type="button" class="base-option active" data-visibilidade="privado">Privado</button>
-                <button type="button" class="base-option" data-visibilidade="publico">Público</button>
+                <button type="button" class="base-option active" data-visibilidade="privado" data-requires-auth>Privado</button>
+                <button type="button" class="base-option" data-visibilidade="publico" data-requires-auth>Público</button>
               </div>
               <p class="form-helper-text" id="mapa-visibilidade-helper">Privado: só quem colabora no mapa vê a geometria e inicia jornada de teste (RN-FIG-006).</p>
             </div>
@@ -968,17 +1035,17 @@
           </div>
           <h2 class="memory-title" id="memory-title">Primeira colheita da horta</h2>
           <div class="marker-actions memory-marker-actions" id="memory-marker-actions">
-            <button type="button" class="marker-action-btn" id="btn-memory-style" aria-label="Estilo" aria-expanded="false" aria-controls="memory-style-popover">
+            <button type="button" class="marker-action-btn" id="btn-memory-style" data-requires-auth aria-label="Estilo" aria-expanded="false" aria-controls="memory-style-popover">
               <span class="ds-icon ds-icon-18">
                 <img src="./icons/palette.svg" alt="" width="18" height="18" />
               </span>
             </button>
-            <button type="button" class="marker-action-btn" id="btn-memory-edit" aria-label="Editar">
+            <button type="button" class="marker-action-btn" id="btn-memory-edit" data-requires-auth aria-label="Editar">
               <span class="ds-icon ds-icon-18">
                 <img src="./icons/pencil.svg" alt="" width="18" height="18" />
               </span>
             </button>
-            <button type="button" class="marker-action-btn marker-action-danger" id="btn-memory-delete" aria-label="Excluir">
+            <button type="button" class="marker-action-btn marker-action-danger" id="btn-memory-delete" data-requires-auth aria-label="Excluir">
               <span class="ds-icon ds-icon-18">
                 <img src="./icons/trash-2.svg" alt="" width="18" height="18" />
               </span>
@@ -1005,7 +1072,7 @@
             id="memory-comment-input"
             placeholder="Escreva um comentário..."
           />
-          <button type="button" class="memory-send-btn" id="memory-send-btn">Enviar</button>
+          <button type="button" class="memory-send-btn" id="memory-send-btn" data-requires-auth>Enviar</button>
         </div>
       </div>
     </div>

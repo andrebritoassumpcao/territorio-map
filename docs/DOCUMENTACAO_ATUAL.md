@@ -30,6 +30,7 @@
 16. [Figital — autoria no mapa (Fase 1)](#16-figital--autoria-no-mapa-fase-1)
 17. [Limitações conscientes](#17-limitações-conscientes)
 18. [Persistência do mapa (Supabase)](#18-persistência-do-mapa-supabase)
+19. [Login (Supabase Auth)](#19-login-supabase-auth)
 
 ---
 
@@ -37,7 +38,7 @@
 
 O repositório contém o **protótipo do Mapa** da plataforma Território: uma interface colaborativa para visualizar e criar missões, mutirões, memórias e elementos geográficos sobre um mapa.
 
-O que o usuário vê ao abrir o projeto **não é um produto com persistência, contas ou múltiplos mapas**. É uma **POC visual** com dados mockados no cliente, focada em validar layout, ferramentas e fluxos de criação no mapa.
+O que o usuário vê ao abrir o projeto **não é um produto com contas, papéis ou múltiplos mapas** — há apenas um **login mínimo com um usuário único de demonstração** (ver [seção 19](#19-login-supabase-auth)): o mapa é visível sem login, mas editar exige entrar. É uma **POC visual** com dados mockados no cliente, focada em validar layout, ferramentas e fluxos de criação no mapa.
 
 A documentação de regras de negócio original (`Documentacao_Regras_de_Negocio_Mapa.md`) descreve o produto planejado. O que está implementado de fato está neste arquivo. O que ainda não chegou está em `docs/FUNCIONALIDADES_PENDENTES.md`.
 
@@ -95,7 +96,7 @@ Territorio-map/
 | Mapa | Leaflet 1.9.4 | Renderização, zoom, marcadores, linhas e polígonos |
 | Tiles | Esri World Imagery + OpenStreetMap | Satélite e mapa vetorial |
 | Dados | Arrays mockados em `app.js` | Na fase atual, só **áreas iniciais reais** (polígonos/trilhas de Queimados e Nova Iguaçu). Arrays de missões, mutirões, memórias e marcadores iniciam **vazios** |
-| Backend da tela principal | Nenhum servidor próprio | Sem login e sem API própria; **persistência opcional via Supabase** chamado direto do cliente (ver §18) |
+| Backend da tela principal | Nenhum servidor próprio | Sem API própria; **persistência opcional via Supabase** chamado direto do cliente (ver §18) e **login mínimo via Supabase Auth** (ver §19) |
 | Persistência do mapa | Supabase (`@supabase/supabase-js`) | Snapshot único do mapa em JSONB; autosave com debounce; re-hidrata no boot. Só ativa se `VITE_SUPABASE_*` existir |
 | Figital (autoria) | `src/figital/model.js` + `qrcode` (npm) | Percurso, totem, missão de totem e insumo — estado em memória do navegador, ver §16 |
 | Figital (API) | `poc/server/figital.js` (Express, em memória) | Percursos/totens/manifest reais; jornadas/insumos/export como stubs — ver §16 |
@@ -512,8 +513,10 @@ create table if not exists map_state (
 );
 alter table map_state enable row level security;
 create policy "anon read"   on map_state for select using (true);
-create policy "anon insert" on map_state for insert with check (true);
-create policy "anon update" on map_state for update using (true) with check (true);
+-- Escrita só para usuário logado (migração map_state_escrita_somente_autenticado, 23/09/2026;
+-- substituiu as antigas policies "anon insert" / "anon update").
+create policy "auth insert" on map_state for insert to authenticated with check (true);
+create policy "auth update" on map_state for update to authenticated using (true) with check (true);
 ```
 
 ### Configuração
@@ -524,9 +527,9 @@ create policy "anon update" on map_state for update using (true) with check (tru
 
 ### Limitações conscientes desta persistência
 
-- A `anon key` fica **pública** no front-end (design do Supabase). Para uma demo é aceitável,
-  mas qualquer pessoa com o site pode ler/gravar esse mapa. Travar escrita exigiria
-  autenticação/policies mais estritas.
+- A `anon key` fica **pública** no front-end (design do Supabase). A **gravação** exige sessão
+  autenticada (§19); a **leitura** de `map_state` é aberta a `anon` de propósito (o mapa é visível
+  sem login), então qualquer pessoa pode ler o snapshot, inclusive direto pela API.
 - É **um snapshot único compartilhado**: editores simultâneos podem sobrescrever uns aos
   outros (sem merge/versionamento). Adequado para operação por uma pessoa no evento.
 - Fotos de memória carregadas como *data URL* entram no JSON e aumentam o tamanho da linha —
@@ -535,4 +538,46 @@ create policy "anon update" on map_state for update using (true) with check (tru
 
 ---
 
-*Documento atualizado em 18/09/2026 — descreve o estado do código neste repositório, não o produto planejado.*
+## 19. Login (Supabase Auth)
+
+Autenticação **mínima**, só para que ninguém edite o protótipo durante apresentações. O mapa é
+**visível para todos** sem login (leitura anônima do snapshot); criar, editar, excluir e mudar
+estilo/visibilidade exigem login. Não há cadastro, recuperação de senha, perfis nem papéis.
+
+- **Usuário:** um único usuário de demonstração, `territorio@visao.coop`, criado direto no
+  Supabase Auth (`auth.users` + `auth.identities`, e-mail já confirmado) do projeto
+  `territorio-map`. A senha **não** está no repositório — fica só como hash no Supabase.
+- **Topo:** deslogado, o canto superior direito mostra o botão **"Entrar"** (`#btn-login`) no
+  lugar do perfil; logado, aparece o perfil (`#btn-profile`, nome/nível ainda mockados
+  "Amanda Waller").
+- **Modal:** `#login-screen` em `poc/client/index.html` (primeiro filho do `body`), oculto por
+  padrão, acima de todos os modais (`z-index: 3000`), com véu translúcido sobre o mapa.
+  Reaproveita o design system (`.modal-card`, `.form-group`/`.form-label`/`.form-input`,
+  `.form-error`, `.card-btn-primary`, `.btn-close-panel`, logo). Fecha por X, Esc ou clique fora;
+  enquanto aberto, `#app-container` fica `inert`.
+- **Ações protegidas:** todo controle que altera o mapa tem o atributo `data-requires-auth`
+  (Novo Marcador, Desenhar, ações da forma selecionada — adicionar/ficha do percurso/estilo/
+  editar/excluir —, estilo/editar/excluir/comentar memória, estilo/editar/excluir nos popups,
+  "Adicionar memória", "Criar mutirão para esta missão", visibilidade do mapa no Painel Figital).
+  Deslogado, um listener de clique em **fase de captura** no `document` intercepta esses cliques
+  e abre o modal ("Entre para editar o mapa."); após o login, a ação interrompida é repetida
+  automaticamente. Arrastar formas também fica desligado sem login (o arraste vira pan do mapa).
+  Visualizar popups, fichas, memórias, painel Figital e exportações segue liberado.
+- **Módulo:** `poc/client/src/auth.js` (`getSession`, `signIn` via `signInWithPassword`,
+  `signOut`) usa o mesmo cliente exportado por `db.js`, então o autosave sai com o JWT do usuário.
+- **Fluxo (`initAuthGate` em `app.js`):** no boot lê a sessão (persistida pelo supabase-js no
+  `localStorage`), ajusta o topo e roda `initPersistence()` (carrega o snapshot com ou sem login;
+  só semeia o banco se logado). `scheduleSave()` não grava sem sessão. Erro de login mostra
+  "E-mail ou senha inválidos.". Recarregar mantém a sessão.
+- **Sair:** item "Sair" no fim do menu de perfil → `signOut()` + recarrega a página (volta ao mapa
+  em modo visualização, com "Entrar" no topo).
+- **Banco:** escrita em `map_state` só para `authenticated` (§18); leitura segue anônima.
+- **Sem Supabase configurado** (sem `VITE_SUPABASE_*`): o login é pulado com `console.warn` e a
+  POC roda só em memória, como antes.
+- **Configuração manual obrigatória no painel do Supabase:** Authentication → desligar
+  "Allow new users to sign up". Sem isso, qualquer pessoa com a anon key pode criar uma conta
+  pela API e passar pelo login.
+
+---
+
+*Documento atualizado em 23/09/2026 — descreve o estado do código neste repositório, não o produto planejado.*

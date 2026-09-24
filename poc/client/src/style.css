@@ -3455,3 +3455,101 @@ textarea:focus-visible,
     transform: none;
   }
 }
+
+/* ==========================================================================
+   LOGIN (Supabase Auth — usuário único de demonstração)
+   Modal sobre o mapa (visível sem login); reaproveita .modal-card / .form-* / .card-btn.
+   ========================================================================== */
+.login-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 3000; /* acima de .modal-backdrop (2000) e .confirm-backdrop (2500) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(15, 23, 42, 0.5); /* mesmo véu do .modal-backdrop */
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+
+.login-card {
+  position: relative;
+  max-width: 400px;
+  max-height: none;
+  transform: none;
+  box-shadow: var(--elevation-2);
+}
+
+.login-close {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+}
+
+.btn-login-header {
+  width: auto;
+  padding: 9px 20px;
+  font-family: inherit;
+}
+
+.btn-login-header:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 32px 28px 28px;
+}
+
+.login-brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-2);
+}
+
+.login-logo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
+.login-heading {
+  text-align: center;
+}
+
+.login-heading .form-helper-text {
+  margin-top: 4px;
+}
+
+.login-error {
+  margin-top: -4px;
+}
+
+/* .form-error define display:block, que anularia o atributo [hidden] */
+.login-error[hidden] {
+  display: none;
+}
+
+.login-submit {
+  padding: 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.login-submit:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.login-submit:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.profile-menu-logout {
+  color: var(--color-feedback-error-solid);
+}

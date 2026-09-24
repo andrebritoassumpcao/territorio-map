@@ -19,6 +19,7 @@ import {
   gerarAssinaturaMock
 } from './figital/model.js';
 import { dbEnabled, loadSnapshot, saveSnapshot } from './db.js';
+import { authEnabled, getSession, signIn, signOut } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. INICIALIZAÇÃO DO MAPA (LEAFLET + SATÉLITE ESRI)
@@ -100,6 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let persistenceReady = false;
   let hydrating = false;
   let saveTimer = null;
+  // Login (ver initAuthGate, seção 10.1): o mapa é visível sem login, mas criar/editar/
+  // excluir (elementos com data-requires-auth) e gravar no banco exigem sessão.
+  let isAuthenticated = false;
 
   function newFeatureId(prefix) {
     featureSeq += 1;
@@ -229,13 +233,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const safeId = escapeJsString(id);
     return `
       <div class="marker-actions">
-        <button type="button" class="marker-action-btn" aria-label="Estilo" aria-expanded="false" aria-controls="marker-style-${kind}-${id}" onclick="toggleMarkerStyle(event,'${kind}','${safeId}')">
+        <button type="button" class="marker-action-btn" data-requires-auth aria-label="Estilo" aria-expanded="false" aria-controls="marker-style-${kind}-${id}" onclick="toggleMarkerStyle(event,'${kind}','${safeId}')">
           ${iconImg(ICON.palette, 18)}
         </button>
-        <button type="button" class="marker-action-btn" aria-label="Editar" onclick="editMapItem('${kind}','${safeId}')">
+        <button type="button" class="marker-action-btn" data-requires-auth aria-label="Editar" onclick="editMapItem('${kind}','${safeId}')">
           ${iconImg(ICON.pencil, 18)}
         </button>
-        <button type="button" class="marker-action-btn marker-action-danger" aria-label="Excluir" onclick="confirmDeleteMapItem('${kind}','${safeId}')">
+        <button type="button" class="marker-action-btn marker-action-danger" data-requires-auth aria-label="Excluir" onclick="confirmDeleteMapItem('${kind}','${safeId}')">
           ${iconImg(ICON.trash, 18)}
         </button>
       </div>
@@ -286,7 +290,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function bindShapeDrag(record) {
     const onMouseDown = (e) => {
-      if (mapTool !== 'select' || placeState.pickingInside) return;
+      // Deslogado não arrasta formas: o mousedown segue para o mapa (pan normal).
+      if (!isAuthenticated || mapTool !== 'select' || placeState.pickingInside) return;
       L.DomEvent.stop(e);
       const origin = e.latlng;
       const originPoint = map.latLngToLayerPoint(origin);
@@ -512,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function memoryPanelHtml(kind, data) {
     const memorias = data.memorias || [];
-    const addBtn = `<button type="button" class="card-btn card-btn-purple" onclick="openCreateMemoryFor('${kind}','${escapeJsString(data.id)}')">Adicionar memória</button>`;
+    const addBtn = `<button type="button" class="card-btn card-btn-purple" data-requires-auth onclick="openCreateMemoryFor('${kind}','${escapeJsString(data.id)}')">Adicionar memória</button>`;
     if (!memorias.length) {
       return `
         <div class="card-memory-empty">
@@ -616,7 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ${vinculoShapeHtml(data.vinculo)}
       <div class="card-action-group">
         <button class="card-btn card-btn-primary" type="button" onclick="showToast('Abrindo detalhes da missão...')">${detailsLabel}</button>
-        <button class="card-btn card-btn-outline-amber" type="button" onclick="openCreateMutiraoForMissao('${escapeJsString(data.titulo)}')">
+        <button class="card-btn card-btn-outline-amber" type="button" data-requires-auth onclick="openCreateMutiraoForMissao('${escapeJsString(data.titulo)}')">
           Criar mutirão para esta missão
         </button>
         <button class="card-btn card-btn-outline" type="button" onclick="gerarQrMissao('${escapeJsString(data.id)}')">
@@ -1132,6 +1137,11 @@ document.addEventListener('DOMContentLoaded', () => {
     profileMenu.querySelector('.profile-menu-link')?.addEventListener('click', () => {
       showToast('Abrindo sua rede...');
       closeProfileMenu();
+    });
+    document.getElementById('btn-logout')?.addEventListener('click', async () => {
+      closeProfileMenu();
+      await signOut();
+      window.location.reload(); // volta para a tela de login com estado limpo
     });
     profileMenu.querySelector('.profile-empty-btn')?.addEventListener('click', () => {
       showToast('Vamos adicionar uma organização.');
@@ -3791,7 +3801,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function scheduleSave() {
-    if (!persistenceReady || hydrating || !dbEnabled) return;
+    if (!persistenceReady || hydrating || !dbEnabled || !isAuthenticated) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => saveSnapshot(serializeState()), 800);
   }
@@ -3869,14 +3879,119 @@ document.addEventListener('DOMContentLoaded', () => {
     const snap = await loadSnapshot();
     if (snap && typeof snap === 'object') {
       hydrateFromSnapshot(snap);
-    } else {
+    } else if (isAuthenticated) {
       // Primeira vez: semeia o banco com o estado inicial (áreas reais).
+      // Só logado — o RLS de map_state recusa escrita anônima.
       await saveSnapshot(serializeState());
     }
     persistenceReady = true; // liga o autosave só depois de hidratar/semear
   }
 
-  initPersistence();
+  // 10.1 LOGIN — o mapa é visível e carrega do banco sem login (leitura anônima).
+  // Ações que alteram o mapa ficam marcadas com [data-requires-auth]: deslogado, o clique
+  // é interceptado (fase de captura, antes dos handlers/onclick) e abre o modal de login;
+  // depois de entrar, a ação que foi interrompida é repetida. Gravação só com sessão
+  // (scheduleSave + RLS de map_state).
+  async function initAuthGate() {
+    const loginScreen = document.getElementById('login-screen');
+    const loginForm = document.getElementById('login-form');
+    const emailInput = document.getElementById('login-email');
+    const passwordInput = document.getElementById('login-password');
+    const loginError = document.getElementById('login-error');
+    const loginSubtitle = document.getElementById('login-subtitle');
+    const submitBtn = document.getElementById('login-submit');
+    const btnLogin = document.getElementById('btn-login');
+    const btnLoginClose = document.getElementById('btn-login-close');
+    const appContainer = document.getElementById('app-container');
+    let pendingAuthTarget = null;
+
+    function updateAuthUi() {
+      btnLogin?.classList.toggle('hidden', isAuthenticated);
+      btnProfile?.classList.toggle('hidden', !isAuthenticated);
+    }
+
+    function openLogin(target = null) {
+      pendingAuthTarget = target;
+      loginSubtitle.textContent = target
+        ? 'Entre para editar o mapa.'
+        : 'Entre para criar e editar no mapa colaborativo.';
+      loginError.hidden = true;
+      loginScreen.classList.remove('hidden');
+      appContainer?.setAttribute('inert', '');
+      emailInput.focus();
+    }
+
+    function closeLogin() {
+      loginScreen.classList.add('hidden');
+      appContainer?.removeAttribute('inert');
+      passwordInput.value = '';
+      if (!isAuthenticated) btnLogin?.focus();
+    }
+
+    if (!authEnabled) {
+      console.warn('[auth] Supabase não configurado: login desativado (modo só em memória).');
+      isAuthenticated = true;
+    } else {
+      isAuthenticated = Boolean(await getSession());
+    }
+    updateAuthUi();
+    initPersistence();
+    if (!authEnabled) return;
+
+    document.addEventListener('click', (e) => {
+      if (isAuthenticated) return;
+      const target = e.target instanceof Element ? e.target.closest('[data-requires-auth]') : null;
+      if (!target) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      openLogin(target);
+    }, true);
+
+    btnLogin?.addEventListener('click', () => openLogin());
+    btnLoginClose?.addEventListener('click', closeLogin);
+    loginScreen.addEventListener('click', (e) => {
+      if (e.target === loginScreen) closeLogin();
+    });
+    loginScreen.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLogin();
+    });
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      if (!email || !password) {
+        loginError.textContent = 'Informe e-mail e senha.';
+        loginError.hidden = false;
+        return;
+      }
+
+      loginError.hidden = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Entrando...';
+
+      const result = await signIn(email, password);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Entrar';
+
+      if (!result.ok) {
+        loginError.textContent = result.message;
+        loginError.hidden = false;
+        passwordInput.select();
+        return;
+      }
+
+      isAuthenticated = true;
+      updateAuthUi();
+      closeLogin();
+      showToast('Você entrou. Agora pode editar o mapa.');
+      const target = pendingAuthTarget;
+      pendingAuthTarget = null;
+      if (target?.isConnected) target.click();
+    });
+  }
+
+  initAuthGate();
 
   // 8. TOAST NOTIFICATION UTILITY
   window.showToast = function(message) {
